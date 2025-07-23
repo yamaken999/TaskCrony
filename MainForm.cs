@@ -522,23 +522,23 @@ public partial class MainForm : Form
         {
             if (prefixDateBefore)
             {
-                result = dateString + prefix + result;
+                result = dateString + prefix + "_" + result;
             }
             else if (prefixDateAfter)
             {
-                result = prefix + dateString + result;
+                result = prefix + dateString + "_" + result;
             }
             else
             {
-                result = prefix + result;
+                result = prefix + "_" + result;
             }
         }
         else
         {
-            // 接頭語が空でも日付チェックボックスが選択されている場合
+            // 接頭語が空でも日付位置が指定されている場合は日付のみを追加
             if (prefixDateBefore || prefixDateAfter)
             {
-                result = dateString + result;
+                result = dateString + "_" + result;
             }
         }
 
@@ -547,15 +547,44 @@ public partial class MainForm : Form
         {
             if (suffixDateBefore)
             {
-                result = result + dateString + suffix;
+                result = result + "_" + dateString + suffix;
             }
             else if (suffixDateAfter)
             {
-                result = result + suffix + dateString;
+                result = result + "_" + suffix + dateString;
             }
             else
             {
-                result = result + suffix;
+                result = result + "_" + suffix;
+            }
+        }
+        else
+        {
+            // 接尾語が空でも日付位置が指定されている場合は日付のみを追加
+            if (suffixDateBefore || suffixDateAfter)
+            {
+                result = result + "_" + dateString;
+            }
+            if (prefixDateBefore || prefixDateAfter)
+            {
+                result = dateString + "_" + result;
+            }
+        }
+
+        // 接尾語の処理
+        if (!string.IsNullOrWhiteSpace(suffix))
+        {
+            if (suffixDateBefore)
+            {
+                result = result + "_" + dateString + suffix;
+            }
+            else if (suffixDateAfter)
+            {
+                result = result + "_" + suffix + dateString;
+            }
+            else
+            {
+                result = result + "_" + suffix;
             }
         }
         else
@@ -563,7 +592,7 @@ public partial class MainForm : Form
             // 接尾語が空でも日付チェックボックスが選択されている場合
             if (suffixDateBefore || suffixDateAfter)
             {
-                result = result + dateString;
+                result = result + "_" + dateString;
             }
         }
 
@@ -751,6 +780,14 @@ public partial class MainForm : Form
         }
         batContent.AppendLine("set /p DATE_STRING=<temp_date.txt");
         batContent.AppendLine("del temp_date.txt");
+        batContent.AppendLine("");
+
+        // 設定値をBATファイルに記録（編集機能用）
+        batContent.AppendLine("rem === TaskCrony 設定情報 ===");
+        batContent.AppendLine($"rem DESTINATION={textBoxDestinationPath.Text}");
+        batContent.AppendLine($"rem REPLACE_FROM={textBoxReplaceFrom.Text}");
+        batContent.AppendLine($"rem REPLACE_TO={textBoxReplaceTo.Text}");
+        batContent.AppendLine("rem === 設定情報終了 ===");
         batContent.AppendLine("");
 
         // ファイル名構築関数

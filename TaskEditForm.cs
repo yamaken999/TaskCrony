@@ -254,6 +254,9 @@ public partial class TaskEditForm : Form
         // 日付オフセットの解析
         ParseDateOffset(lines);
         
+        // 作成先パスと文字列置換設定の解析
+        ParseDestinationAndReplacementSettings(lines);
+        
         // フォルダ作成設定の解析
         ParseFolderSettings(lines);
         
@@ -279,6 +282,64 @@ public partial class TaskEditForm : Form
                     numericUpDownDateOffset.Value = offset;
                 }
                 break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 作成先パスと文字列置換設定を解析
+    /// </summary>
+    private void ParseDestinationAndReplacementSettings(string[] lines)
+    {
+        foreach (var line in lines)
+        {
+            // BATファイルのコメントから設定を抽出
+            if (line.StartsWith("rem DESTINATION="))
+            {
+                var destination = line.Substring("rem DESTINATION=".Length).Trim();
+                if (!string.IsNullOrEmpty(destination))
+                {
+                    textBoxDestinationPath.Text = destination;
+                }
+                continue;
+            }
+
+            if (line.StartsWith("rem REPLACE_FROM="))
+            {
+                var replaceFrom = line.Substring("rem REPLACE_FROM=".Length).Trim();
+                textBoxReplaceFrom.Text = replaceFrom;
+                continue;
+            }
+
+            if (line.StartsWith("rem REPLACE_TO="))
+            {
+                var replaceTo = line.Substring("rem REPLACE_TO=".Length).Trim();
+                textBoxReplaceTo.Text = replaceTo;
+                continue;
+            }
+
+            // 作成先パスの抽出（フォルダパス設定からのフォールバック）
+            var folderPathMatch = Regex.Match(line, @"set\s+FOLDER_PATH=""([^""]+)""");
+            if (folderPathMatch.Success && string.IsNullOrEmpty(textBoxDestinationPath.Text))
+            {
+                var folderPath = folderPathMatch.Groups[1].Value;
+                // "%FOLDER_NAME%" を除去して基本パスを取得
+                var basePath = folderPath.Replace("\\%FOLDER_NAME%", "");
+                textBoxDestinationPath.Text = basePath;
+                continue;
+            }
+
+            // ファイルパス設定からの作成先パス抽出（フォールバック）
+            var filePathMatch = Regex.Match(line, @"set\s+FILE_PATH=""([^""]+)\\");
+            if (filePathMatch.Success && string.IsNullOrEmpty(textBoxDestinationPath.Text))
+            {
+                var filePath = filePathMatch.Groups[1].Value;
+                // 環境変数を除去して基本パスを取得
+                if (!filePath.Contains("%"))
+                {
+                    textBoxDestinationPath.Text = filePath;
+                }
+                continue;
             }
         }
     }
