@@ -7,19 +7,6 @@ namespace TaskCrony
         /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing && (components != null))
-            {
-                components.Dispose();
-            }
-            base.Dispose(disposing);
-        }
-
         #region Windows Form Designer generated code
 
         /// <summary>
@@ -28,616 +15,553 @@ namespace TaskCrony
         /// </summary>
         private void InitializeComponent()
         {
-            this.textBoxTaskName = new System.Windows.Forms.TextBox();
-            this.labelTaskName = new System.Windows.Forms.Label();
-            this.textBoxTime = new System.Windows.Forms.TextBox();
-            this.labelTime = new System.Windows.Forms.Label();
-            this.textBoxSourceFolder = new System.Windows.Forms.TextBox();
-            this.labelSourceFolder = new System.Windows.Forms.Label();
-            this.buttonSourceFolderBrowse = new System.Windows.Forms.Button();
-            this.textBoxDestinationFolder = new System.Windows.Forms.TextBox();
-            this.labelDestinationFolder = new System.Windows.Forms.Label();
-            this.buttonDestinationFolderBrowse = new System.Windows.Forms.Button();
-            this.textBoxFileName = new System.Windows.Forms.TextBox();
-            this.labelFileName = new System.Windows.Forms.Label();
-            this.textBoxPrefix = new System.Windows.Forms.TextBox();
-            this.labelPrefix = new System.Windows.Forms.Label();
-            this.textBoxSuffix = new System.Windows.Forms.TextBox();
-            this.labelSuffix = new System.Windows.Forms.Label();
-            this.checkBoxEnableTask = new System.Windows.Forms.CheckBox();
-            this.checkBoxCopyFiles = new System.Windows.Forms.CheckBox();
-            this.checkBoxCreateFolder = new System.Windows.Forms.CheckBox();
-            this.comboBoxInterval = new System.Windows.Forms.ComboBox();
-            this.labelInterval = new System.Windows.Forms.Label();
-            this.textBoxDateOffset = new System.Windows.Forms.TextBox();
-            this.labelDateOffset = new System.Windows.Forms.Label();
-            this.button1 = new System.Windows.Forms.Button();
-            this.buttonOK = new System.Windows.Forms.Button();
-            this.buttonCancel = new System.Windows.Forms.Button();
-            this.textBoxPreview = new System.Windows.Forms.TextBox();
-            this.labelPreview = new System.Windows.Forms.Label();
-            this.textBoxFolderBaseName = new System.Windows.Forms.TextBox();
-            this.labelFolderBaseName = new System.Windows.Forms.Label();
-            this.textBoxFolderPrefix = new System.Windows.Forms.TextBox();
-            this.labelFolderPrefix = new System.Windows.Forms.Label();
-            this.textBoxFolderSuffix = new System.Windows.Forms.TextBox();
-            this.labelFolderSuffix = new System.Windows.Forms.Label();
-            this.groupBoxPrefixOptions = new System.Windows.Forms.GroupBox();
-            this.checkBoxPrefixDateBefore = new System.Windows.Forms.RadioButton();
-            this.checkBoxPrefixDateAfter = new System.Windows.Forms.RadioButton();
-            this.groupBoxSuffixOptions = new System.Windows.Forms.GroupBox();
-            this.checkBoxSuffixDateBefore = new System.Windows.Forms.RadioButton();
-            this.checkBoxSuffixDateAfter = new System.Windows.Forms.RadioButton();
-            this.groupBoxFolderPrefixOptions = new System.Windows.Forms.GroupBox();
-            this.checkBoxFolderPrefixDateBefore = new System.Windows.Forms.RadioButton();
-            this.checkBoxFolderPrefixDateAfter = new System.Windows.Forms.RadioButton();
-            this.groupBoxFolderSuffixOptions = new System.Windows.Forms.GroupBox();
-            this.checkBoxFolderSuffixDateBefore = new System.Windows.Forms.RadioButton();
-            this.checkBoxFolderSuffixDateAfter = new System.Windows.Forms.RadioButton();
-            this.groupBoxFileReplace = new System.Windows.Forms.GroupBox();
-            this.labelReplaceFrom = new System.Windows.Forms.Label();
-            this.textBoxReplaceFrom = new System.Windows.Forms.TextBox();
-            this.labelReplaceTo = new System.Windows.Forms.Label();
-            this.textBoxReplaceTo = new System.Windows.Forms.TextBox();
-            this.groupBoxPrefixOptions.SuspendLayout();
-            this.groupBoxSuffixOptions.SuspendLayout();
-            this.groupBoxFolderPrefixOptions.SuspendLayout();
-            this.groupBoxFolderSuffixOptions.SuspendLayout();
-            this.groupBoxFileReplace.SuspendLayout();
-            this.SuspendLayout();
-            // 
-            // textBoxTaskName
-            // 
-            this.textBoxTaskName.Location = new System.Drawing.Point(150, 15);
-            this.textBoxTaskName.Name = "textBoxTaskName";
-            this.textBoxTaskName.Size = new System.Drawing.Size(300, 27);
-            this.textBoxTaskName.TabIndex = 1;
-            // 
-            // labelTaskName
-            // 
-            this.labelTaskName.AutoSize = true;
-            this.labelTaskName.Location = new System.Drawing.Point(15, 18);
-            this.labelTaskName.Name = "labelTaskName";
-            this.labelTaskName.Size = new System.Drawing.Size(67, 20);
-            this.labelTaskName.TabIndex = 0;
-            this.labelTaskName.Text = "タスク名:";
-            // 
-            // textBoxTime
-            // 
-            this.textBoxTime.Location = new System.Drawing.Point(150, 55);
-            this.textBoxTime.Name = "textBoxTime";
-            this.textBoxTime.Size = new System.Drawing.Size(150, 27);
-            this.textBoxTime.TabIndex = 3;
-            // 
-            // labelTime
-            // 
-            this.labelTime.AutoSize = true;
-            this.labelTime.Location = new System.Drawing.Point(15, 58);
-            this.labelTime.Name = "labelTime";
-            this.labelTime.Size = new System.Drawing.Size(67, 20);
-            this.labelTime.TabIndex = 2;
-            this.labelTime.Text = "実行時間:";
-            // 
-            // textBoxSourceFolder
-            // 
-            this.textBoxSourceFolder.Location = new System.Drawing.Point(150, 95);
-            this.textBoxSourceFolder.Name = "textBoxSourceFolder";
-            this.textBoxSourceFolder.Size = new System.Drawing.Size(450, 27);
-            this.textBoxSourceFolder.TabIndex = 5;
-            // 
-            // labelSourceFolder
-            // 
-            this.labelSourceFolder.AutoSize = true;
-            this.labelSourceFolder.Location = new System.Drawing.Point(15, 98);
-            this.labelSourceFolder.Name = "labelSourceFolder";
-            this.labelSourceFolder.Size = new System.Drawing.Size(91, 20);
-            this.labelSourceFolder.TabIndex = 4;
-            this.labelSourceFolder.Text = "コピー元フォルダ:";
-            // 
-            // buttonSourceFolderBrowse
-            // 
-            this.buttonSourceFolderBrowse.Location = new System.Drawing.Point(610, 95);
-            this.buttonSourceFolderBrowse.Name = "buttonSourceFolderBrowse";
-            this.buttonSourceFolderBrowse.Size = new System.Drawing.Size(75, 27);
-            this.buttonSourceFolderBrowse.TabIndex = 6;
-            this.buttonSourceFolderBrowse.Text = "参照...";
-            this.buttonSourceFolderBrowse.UseVisualStyleBackColor = true;
-            this.buttonSourceFolderBrowse.Click += new System.EventHandler(this.buttonSourceFolderBrowse_Click);
-            // 
-            // textBoxDestinationFolder
-            // 
-            this.textBoxDestinationFolder.Location = new System.Drawing.Point(150, 135);
-            this.textBoxDestinationFolder.Name = "textBoxDestinationFolder";
-            this.textBoxDestinationFolder.Size = new System.Drawing.Size(450, 27);
-            this.textBoxDestinationFolder.TabIndex = 8;
-            // 
-            // labelDestinationFolder
-            // 
-            this.labelDestinationFolder.AutoSize = true;
-            this.labelDestinationFolder.Location = new System.Drawing.Point(15, 138);
-            this.labelDestinationFolder.Name = "labelDestinationFolder";
-            this.labelDestinationFolder.Size = new System.Drawing.Size(91, 20);
-            this.labelDestinationFolder.TabIndex = 7;
-            this.labelDestinationFolder.Text = "コピー先フォルダ:";
-            // 
-            // buttonDestinationFolderBrowse
-            // 
-            this.buttonDestinationFolderBrowse.Location = new System.Drawing.Point(610, 135);
-            this.buttonDestinationFolderBrowse.Name = "buttonDestinationFolderBrowse";
-            this.buttonDestinationFolderBrowse.Size = new System.Drawing.Size(75, 27);
-            this.buttonDestinationFolderBrowse.TabIndex = 9;
-            this.buttonDestinationFolderBrowse.Text = "参照...";
-            this.buttonDestinationFolderBrowse.UseVisualStyleBackColor = true;
-            this.buttonDestinationFolderBrowse.Click += new System.EventHandler(this.buttonDestinationFolderBrowse_Click);
-            // 
-            // textBoxFileName
-            // 
-            this.textBoxFileName.Location = new System.Drawing.Point(150, 175);
-            this.textBoxFileName.Name = "textBoxFileName";
-            this.textBoxFileName.Size = new System.Drawing.Size(300, 27);
-            this.textBoxFileName.TabIndex = 11;
-            this.textBoxFileName.TextChanged += new System.EventHandler(this.textBoxFileName_TextChanged);
-            // 
-            // labelFileName
-            // 
-            this.labelFileName.AutoSize = true;
-            this.labelFileName.Location = new System.Drawing.Point(15, 178);
-            this.labelFileName.Name = "labelFileName";
-            this.labelFileName.Size = new System.Drawing.Size(103, 20);
-            this.labelFileName.TabIndex = 10;
-            this.labelFileName.Text = "ファイル名ベース:";
-            // 
-            // textBoxPrefix
-            // 
-            this.textBoxPrefix.Location = new System.Drawing.Point(150, 215);
-            this.textBoxPrefix.Name = "textBoxPrefix";
-            this.textBoxPrefix.Size = new System.Drawing.Size(200, 27);
-            this.textBoxPrefix.TabIndex = 13;
-            this.textBoxPrefix.TextChanged += new System.EventHandler(this.textBoxPrefix_TextChanged);
-            // 
-            // labelPrefix
-            // 
-            this.labelPrefix.AutoSize = true;
-            this.labelPrefix.Location = new System.Drawing.Point(15, 218);
-            this.labelPrefix.Name = "labelPrefix";
-            this.labelPrefix.Size = new System.Drawing.Size(127, 20);
-            this.labelPrefix.TabIndex = 12;
-            this.labelPrefix.Text = "ファイル名プレフィックス:";
-            // 
-            // textBoxSuffix
-            // 
-            this.textBoxSuffix.Location = new System.Drawing.Point(150, 255);
-            this.textBoxSuffix.Name = "textBoxSuffix";
-            this.textBoxSuffix.Size = new System.Drawing.Size(200, 27);
-            this.textBoxSuffix.TabIndex = 15;
-            this.textBoxSuffix.TextChanged += new System.EventHandler(this.textBoxSuffix_TextChanged);
-            // 
-            // labelSuffix
-            // 
-            this.labelSuffix.AutoSize = true;
-            this.labelSuffix.Location = new System.Drawing.Point(15, 258);
-            this.labelSuffix.Name = "labelSuffix";
-            this.labelSuffix.Size = new System.Drawing.Size(123, 20);
-            this.labelSuffix.TabIndex = 14;
-            this.labelSuffix.Text = "ファイル名サフィックス:";
-            // 
-            // textBoxFolderBaseName
-            // 
-            this.textBoxFolderBaseName.Location = new System.Drawing.Point(150, 335);
-            this.textBoxFolderBaseName.Name = "textBoxFolderBaseName";
-            this.textBoxFolderBaseName.Size = new System.Drawing.Size(300, 27);
-            this.textBoxFolderBaseName.TabIndex = 21;
-            this.textBoxFolderBaseName.TextChanged += new System.EventHandler(this.textBoxFolderBaseName_TextChanged);
-            // 
-            // labelFolderBaseName
-            // 
-            this.labelFolderBaseName.AutoSize = true;
-            this.labelFolderBaseName.Location = new System.Drawing.Point(15, 338);
-            this.labelFolderBaseName.Name = "labelFolderBaseName";
-            this.labelFolderBaseName.Size = new System.Drawing.Size(107, 20);
-            this.labelFolderBaseName.TabIndex = 20;
-            this.labelFolderBaseName.Text = "フォルダ名ベース:";
-            // 
-            // textBoxFolderPrefix
-            // 
-            this.textBoxFolderPrefix.Location = new System.Drawing.Point(150, 375);
-            this.textBoxFolderPrefix.Name = "textBoxFolderPrefix";
-            this.textBoxFolderPrefix.Size = new System.Drawing.Size(200, 27);
-            this.textBoxFolderPrefix.TabIndex = 23;
-            this.textBoxFolderPrefix.TextChanged += new System.EventHandler(this.textBoxFolderPrefix_TextChanged);
-            // 
-            // labelFolderPrefix
-            // 
-            this.labelFolderPrefix.AutoSize = true;
-            this.labelFolderPrefix.Location = new System.Drawing.Point(15, 378);
-            this.labelFolderPrefix.Name = "labelFolderPrefix";
-            this.labelFolderPrefix.Size = new System.Drawing.Size(131, 20);
-            this.labelFolderPrefix.TabIndex = 22;
-            this.labelFolderPrefix.Text = "フォルダ名プレフィックス:";
-            // 
-            // textBoxFolderSuffix
-            // 
-            this.textBoxFolderSuffix.Location = new System.Drawing.Point(150, 415);
-            this.textBoxFolderSuffix.Name = "textBoxFolderSuffix";
-            this.textBoxFolderSuffix.Size = new System.Drawing.Size(200, 27);
-            this.textBoxFolderSuffix.TabIndex = 25;
-            this.textBoxFolderSuffix.TextChanged += new System.EventHandler(this.textBoxFolderSuffix_TextChanged);
-            // 
-            // labelFolderSuffix
-            // 
-            this.labelFolderSuffix.AutoSize = true;
-            this.labelFolderSuffix.Location = new System.Drawing.Point(15, 418);
-            this.labelFolderSuffix.Name = "labelFolderSuffix";
-            this.labelFolderSuffix.Size = new System.Drawing.Size(127, 20);
-            this.labelFolderSuffix.TabIndex = 24;
-            this.labelFolderSuffix.Text = "フォルダ名サフィックス:";
-            // 
-            // groupBoxPrefixOptions
-            // 
-            this.groupBoxPrefixOptions.Controls.Add(this.checkBoxPrefixDateBefore);
-            this.groupBoxPrefixOptions.Controls.Add(this.checkBoxPrefixDateAfter);
-            this.groupBoxPrefixOptions.Location = new System.Drawing.Point(370, 215);
-            this.groupBoxPrefixOptions.Name = "groupBoxPrefixOptions";
-            this.groupBoxPrefixOptions.Size = new System.Drawing.Size(200, 30);
-            this.groupBoxPrefixOptions.TabIndex = 16;
-            this.groupBoxPrefixOptions.TabStop = false;
-            // 
-            // checkBoxPrefixDateBefore
-            // 
-            this.checkBoxPrefixDateBefore.AutoSize = true;
-            this.checkBoxPrefixDateBefore.Location = new System.Drawing.Point(10, 8);
-            this.checkBoxPrefixDateBefore.Name = "checkBoxPrefixDateBefore";
-            this.checkBoxPrefixDateBefore.Size = new System.Drawing.Size(65, 24);
-            this.checkBoxPrefixDateBefore.TabIndex = 0;
-            this.checkBoxPrefixDateBefore.Text = "前置";
-            this.checkBoxPrefixDateBefore.UseVisualStyleBackColor = true;
-            this.checkBoxPrefixDateBefore.CheckedChanged += new System.EventHandler(this.checkBoxPrefixDateBefore_CheckedChanged);
-            // 
-            // checkBoxPrefixDateAfter
-            // 
-            this.checkBoxPrefixDateAfter.AutoSize = true;
-            this.checkBoxPrefixDateAfter.Checked = true;
-            this.checkBoxPrefixDateAfter.Location = new System.Drawing.Point(85, 8);
-            this.checkBoxPrefixDateAfter.Name = "checkBoxPrefixDateAfter";
-            this.checkBoxPrefixDateAfter.Size = new System.Drawing.Size(65, 24);
-            this.checkBoxPrefixDateAfter.TabIndex = 1;
-            this.checkBoxPrefixDateAfter.TabStop = true;
-            this.checkBoxPrefixDateAfter.Text = "後置";
-            this.checkBoxPrefixDateAfter.UseVisualStyleBackColor = true;
-            this.checkBoxPrefixDateAfter.CheckedChanged += new System.EventHandler(this.checkBoxPrefixDateAfter_CheckedChanged);
-            // 
-            // groupBoxSuffixOptions
-            // 
-            this.groupBoxSuffixOptions.Controls.Add(this.checkBoxSuffixDateBefore);
-            this.groupBoxSuffixOptions.Controls.Add(this.checkBoxSuffixDateAfter);
-            this.groupBoxSuffixOptions.Location = new System.Drawing.Point(370, 255);
-            this.groupBoxSuffixOptions.Name = "groupBoxSuffixOptions";
-            this.groupBoxSuffixOptions.Size = new System.Drawing.Size(200, 30);
-            this.groupBoxSuffixOptions.TabIndex = 17;
-            this.groupBoxSuffixOptions.TabStop = false;
-            // 
-            // checkBoxSuffixDateBefore
-            // 
-            this.checkBoxSuffixDateBefore.AutoSize = true;
-            this.checkBoxSuffixDateBefore.Checked = true;
-            this.checkBoxSuffixDateBefore.Location = new System.Drawing.Point(10, 8);
-            this.checkBoxSuffixDateBefore.Name = "checkBoxSuffixDateBefore";
-            this.checkBoxSuffixDateBefore.Size = new System.Drawing.Size(65, 24);
-            this.checkBoxSuffixDateBefore.TabIndex = 0;
-            this.checkBoxSuffixDateBefore.TabStop = true;
-            this.checkBoxSuffixDateBefore.Text = "前置";
-            this.checkBoxSuffixDateBefore.UseVisualStyleBackColor = true;
-            this.checkBoxSuffixDateBefore.CheckedChanged += new System.EventHandler(this.checkBoxSuffixDateBefore_CheckedChanged);
-            // 
-            // checkBoxSuffixDateAfter
-            // 
-            this.checkBoxSuffixDateAfter.AutoSize = true;
-            this.checkBoxSuffixDateAfter.Location = new System.Drawing.Point(85, 8);
-            this.checkBoxSuffixDateAfter.Name = "checkBoxSuffixDateAfter";
-            this.checkBoxSuffixDateAfter.Size = new System.Drawing.Size(65, 24);
-            this.checkBoxSuffixDateAfter.TabIndex = 1;
-            this.checkBoxSuffixDateAfter.Text = "後置";
-            this.checkBoxSuffixDateAfter.UseVisualStyleBackColor = true;
-            this.checkBoxSuffixDateAfter.CheckedChanged += new System.EventHandler(this.checkBoxSuffixDateAfter_CheckedChanged);
-            // 
-            // groupBoxFolderPrefixOptions
-            // 
-            this.groupBoxFolderPrefixOptions.Controls.Add(this.checkBoxFolderPrefixDateBefore);
-            this.groupBoxFolderPrefixOptions.Controls.Add(this.checkBoxFolderPrefixDateAfter);
-            this.groupBoxFolderPrefixOptions.Location = new System.Drawing.Point(370, 375);
-            this.groupBoxFolderPrefixOptions.Name = "groupBoxFolderPrefixOptions";
-            this.groupBoxFolderPrefixOptions.Size = new System.Drawing.Size(200, 30);
-            this.groupBoxFolderPrefixOptions.TabIndex = 26;
-            this.groupBoxFolderPrefixOptions.TabStop = false;
-            // 
-            // checkBoxFolderPrefixDateBefore
-            // 
-            this.checkBoxFolderPrefixDateBefore.AutoSize = true;
-            this.checkBoxFolderPrefixDateBefore.Location = new System.Drawing.Point(10, 8);
-            this.checkBoxFolderPrefixDateBefore.Name = "checkBoxFolderPrefixDateBefore";
-            this.checkBoxFolderPrefixDateBefore.Size = new System.Drawing.Size(65, 24);
-            this.checkBoxFolderPrefixDateBefore.TabIndex = 0;
-            this.checkBoxFolderPrefixDateBefore.Text = "前置";
-            this.checkBoxFolderPrefixDateBefore.UseVisualStyleBackColor = true;
-            this.checkBoxFolderPrefixDateBefore.CheckedChanged += new System.EventHandler(this.checkBoxFolderPrefixDateBefore_CheckedChanged);
-            // 
-            // checkBoxFolderPrefixDateAfter
-            // 
-            this.checkBoxFolderPrefixDateAfter.AutoSize = true;
-            this.checkBoxFolderPrefixDateAfter.Checked = true;
-            this.checkBoxFolderPrefixDateAfter.Location = new System.Drawing.Point(85, 8);
-            this.checkBoxFolderPrefixDateAfter.Name = "checkBoxFolderPrefixDateAfter";
-            this.checkBoxFolderPrefixDateAfter.Size = new System.Drawing.Size(65, 24);
-            this.checkBoxFolderPrefixDateAfter.TabIndex = 1;
-            this.checkBoxFolderPrefixDateAfter.TabStop = true;
-            this.checkBoxFolderPrefixDateAfter.Text = "後置";
-            this.checkBoxFolderPrefixDateAfter.UseVisualStyleBackColor = true;
-            this.checkBoxFolderPrefixDateAfter.CheckedChanged += new System.EventHandler(this.checkBoxFolderPrefixDateAfter_CheckedChanged);
-            // 
-            // groupBoxFolderSuffixOptions
-            // 
-            this.groupBoxFolderSuffixOptions.Controls.Add(this.checkBoxFolderSuffixDateBefore);
-            this.groupBoxFolderSuffixOptions.Controls.Add(this.checkBoxFolderSuffixDateAfter);
-            this.groupBoxFolderSuffixOptions.Location = new System.Drawing.Point(370, 415);
-            this.groupBoxFolderSuffixOptions.Name = "groupBoxFolderSuffixOptions";
-            this.groupBoxFolderSuffixOptions.Size = new System.Drawing.Size(200, 30);
-            this.groupBoxFolderSuffixOptions.TabIndex = 27;
-            this.groupBoxFolderSuffixOptions.TabStop = false;
-            // 
-            // checkBoxFolderSuffixDateBefore
-            // 
-            this.checkBoxFolderSuffixDateBefore.AutoSize = true;
-            this.checkBoxFolderSuffixDateBefore.Checked = true;
-            this.checkBoxFolderSuffixDateBefore.Location = new System.Drawing.Point(10, 8);
-            this.checkBoxFolderSuffixDateBefore.Name = "checkBoxFolderSuffixDateBefore";
-            this.checkBoxFolderSuffixDateBefore.Size = new System.Drawing.Size(65, 24);
-            this.checkBoxFolderSuffixDateBefore.TabIndex = 0;
-            this.checkBoxFolderSuffixDateBefore.TabStop = true;
-            this.checkBoxFolderSuffixDateBefore.Text = "前置";
-            this.checkBoxFolderSuffixDateBefore.UseVisualStyleBackColor = true;
-            this.checkBoxFolderSuffixDateBefore.CheckedChanged += new System.EventHandler(this.checkBoxFolderSuffixDateBefore_CheckedChanged);
-            // 
-            // checkBoxFolderSuffixDateAfter
-            // 
-            this.checkBoxFolderSuffixDateAfter.AutoSize = true;
-            this.checkBoxFolderSuffixDateAfter.Location = new System.Drawing.Point(85, 8);
-            this.checkBoxFolderSuffixDateAfter.Name = "checkBoxFolderSuffixDateAfter";
-            this.checkBoxFolderSuffixDateAfter.Size = new System.Drawing.Size(65, 24);
-            this.checkBoxFolderSuffixDateAfter.TabIndex = 1;
-            this.checkBoxFolderSuffixDateAfter.Text = "後置";
-            this.checkBoxFolderSuffixDateAfter.UseVisualStyleBackColor = true;
-            this.checkBoxFolderSuffixDateAfter.CheckedChanged += new System.EventHandler(this.checkBoxFolderSuffixDateAfter_CheckedChanged);
-            // 
-            // checkBoxEnableTask
-            // 
-            this.checkBoxEnableTask.AutoSize = true;
-            this.checkBoxEnableTask.Location = new System.Drawing.Point(15, 295);
-            this.checkBoxEnableTask.Name = "checkBoxEnableTask";
-            this.checkBoxEnableTask.Size = new System.Drawing.Size(117, 24);
-            this.checkBoxEnableTask.TabIndex = 18;
-            this.checkBoxEnableTask.Text = "タスクを有効化";
-            this.checkBoxEnableTask.UseVisualStyleBackColor = true;
-            // 
-            // checkBoxCopyFiles
-            // 
-            this.checkBoxCopyFiles.AutoSize = true;
-            this.checkBoxCopyFiles.Location = new System.Drawing.Point(150, 295);
-            this.checkBoxCopyFiles.Name = "checkBoxCopyFiles";
-            this.checkBoxCopyFiles.Size = new System.Drawing.Size(134, 24);
-            this.checkBoxCopyFiles.TabIndex = 19;
-            this.checkBoxCopyFiles.Text = "ファイルをコピー";
-            this.checkBoxCopyFiles.UseVisualStyleBackColor = true;
-            this.checkBoxCopyFiles.CheckedChanged += new System.EventHandler(this.checkBoxCopyFiles_CheckedChanged);
-            // 
-            // checkBoxCreateFolder
-            // 
-            this.checkBoxCreateFolder.AutoSize = true;
-            this.checkBoxCreateFolder.Location = new System.Drawing.Point(300, 295);
-            this.checkBoxCreateFolder.Name = "checkBoxCreateFolder";
-            this.checkBoxCreateFolder.Size = new System.Drawing.Size(118, 24);
-            this.checkBoxCreateFolder.TabIndex = 20;
-            this.checkBoxCreateFolder.Text = "フォルダを作成";
-            this.checkBoxCreateFolder.UseVisualStyleBackColor = true;
-            this.checkBoxCreateFolder.CheckedChanged += new System.EventHandler(this.checkBoxCreateFolder_CheckedChanged);
-            // 
-            // comboBoxInterval
-            // 
-            this.comboBoxInterval.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboBoxInterval.FormattingEnabled = true;
-            this.comboBoxInterval.Location = new System.Drawing.Point(380, 55);
-            this.comboBoxInterval.Name = "comboBoxInterval";
-            this.comboBoxInterval.Size = new System.Drawing.Size(150, 28);
-            this.comboBoxInterval.TabIndex = 5;
-            // 
-            // labelInterval
-            // 
-            this.labelInterval.AutoSize = true;
-            this.labelInterval.Location = new System.Drawing.Point(320, 58);
-            this.labelInterval.Name = "labelInterval";
-            this.labelInterval.Size = new System.Drawing.Size(54, 20);
-            this.labelInterval.TabIndex = 4;
-            this.labelInterval.Text = "間隔:";
-            // 
-            // textBoxDateOffset
-            // 
-            this.textBoxDateOffset.Location = new System.Drawing.Point(630, 55);
-            this.textBoxDateOffset.Name = "textBoxDateOffset";
-            this.textBoxDateOffset.Size = new System.Drawing.Size(100, 27);
-            this.textBoxDateOffset.TabIndex = 7;
-            this.textBoxDateOffset.Text = "0";
-            this.textBoxDateOffset.TextChanged += new System.EventHandler(this.textBoxDateOffset_TextChanged);
-            // 
-            // labelDateOffset
-            // 
-            this.labelDateOffset.AutoSize = true;
-            this.labelDateOffset.Location = new System.Drawing.Point(550, 58);
-            this.labelDateOffset.Name = "labelDateOffset";
-            this.labelDateOffset.Size = new System.Drawing.Size(74, 20);
-            this.labelDateOffset.TabIndex = 6;
-            this.labelDateOffset.Text = "日付オフセット:";
-            // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(600, 175);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(100, 30);
-            this.button1.TabIndex = 28;
-            this.button1.Text = "プレビュー更新";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
-            // buttonOK
-            // 
-            this.buttonOK.Location = new System.Drawing.Point(600, 620);
-            this.buttonOK.Name = "buttonOK";
-            this.buttonOK.Size = new System.Drawing.Size(75, 30);
-            this.buttonOK.TabIndex = 31;
-            this.buttonOK.Text = "OK";
-            this.buttonOK.UseVisualStyleBackColor = true;
-            this.buttonOK.Click += new System.EventHandler(this.buttonOK_Click);
-            // 
-            // buttonCancel
-            // 
-            this.buttonCancel.Location = new System.Drawing.Point(685, 620);
-            this.buttonCancel.Name = "buttonCancel";
-            this.buttonCancel.Size = new System.Drawing.Size(75, 30);
-            this.buttonCancel.TabIndex = 32;
-            this.buttonCancel.Text = "キャンセル";
-            this.buttonCancel.UseVisualStyleBackColor = true;
-            this.buttonCancel.Click += new System.EventHandler(this.buttonCancel_Click);
-            // 
-            // textBoxPreview
-            // 
-            this.textBoxPreview.Location = new System.Drawing.Point(150, 550);
-            this.textBoxPreview.Multiline = true;
-            this.textBoxPreview.Name = "textBoxPreview";
-            this.textBoxPreview.ReadOnly = true;
-            this.textBoxPreview.Size = new System.Drawing.Size(610, 50);
-            this.textBoxPreview.TabIndex = 30;
-            // 
-            // labelPreview
-            // 
-            this.labelPreview.AutoSize = true;
-            this.labelPreview.Location = new System.Drawing.Point(15, 553);
-            this.labelPreview.Name = "labelPreview";
-            this.labelPreview.Size = new System.Drawing.Size(71, 20);
-            this.labelPreview.TabIndex = 29;
-            this.labelPreview.Text = "プレビュー:";
-            // 
-            // TaskEditForm
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
+            this.components = new System.ComponentModel.Container();
+            
+            // フォーム設定
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(784, 661);
-            this.Controls.Add(this.textBoxPreview);
-            this.Controls.Add(this.labelPreview);
-            this.Controls.Add(this.button1);
-            this.Controls.Add(this.groupBoxFolderSuffixOptions);
-            this.Controls.Add(this.groupBoxFolderPrefixOptions);
-            this.Controls.Add(this.textBoxFolderSuffix);
-            this.Controls.Add(this.labelFolderSuffix);
-            this.Controls.Add(this.textBoxFolderPrefix);
-            this.Controls.Add(this.labelFolderPrefix);
-            this.Controls.Add(this.textBoxFolderBaseName);
-            this.Controls.Add(this.labelFolderBaseName);
-            this.Controls.Add(this.checkBoxCreateFolder);
-            this.Controls.Add(this.checkBoxCopyFiles);
-            this.Controls.Add(this.checkBoxEnableTask);
-            this.Controls.Add(this.groupBoxSuffixOptions);
-            this.Controls.Add(this.groupBoxPrefixOptions);
-            this.Controls.Add(this.textBoxSuffix);
-            this.Controls.Add(this.labelSuffix);
-            this.Controls.Add(this.textBoxPrefix);
-            this.Controls.Add(this.labelPrefix);
-            this.Controls.Add(this.textBoxFileName);
-            this.Controls.Add(this.labelFileName);
-            this.Controls.Add(this.buttonDestinationFolderBrowse);
-            this.Controls.Add(this.textBoxDestinationFolder);
-            this.Controls.Add(this.labelDestinationFolder);
-            this.Controls.Add(this.buttonSourceFolderBrowse);
-            this.Controls.Add(this.textBoxSourceFolder);
-            this.Controls.Add(this.labelSourceFolder);
-            this.Controls.Add(this.textBoxDateOffset);
-            this.Controls.Add(this.labelDateOffset);
-            this.Controls.Add(this.comboBoxInterval);
-            this.Controls.Add(this.labelInterval);
-            this.Controls.Add(this.textBoxTime);
-            this.Controls.Add(this.labelTime);
-            this.Controls.Add(this.textBoxTaskName);
-            this.Controls.Add(this.labelTaskName);
-            this.Controls.Add(this.buttonCancel);
-            this.Controls.Add(this.buttonOK);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.ClientSize = new Size(1200, 850);
+            this.Text = "タスク編集 - TaskCrony v1.1.0";
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Name = "TaskEditForm";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "タスク編集";
-            this.groupBoxPrefixOptions.ResumeLayout(false);
-            this.groupBoxPrefixOptions.PerformLayout();
-            this.groupBoxSuffixOptions.ResumeLayout(false);
-            this.groupBoxSuffixOptions.PerformLayout();
-            this.groupBoxFolderPrefixOptions.ResumeLayout(false);
-            this.groupBoxFolderPrefixOptions.PerformLayout();
-            this.groupBoxFolderSuffixOptions.ResumeLayout(false);
-            this.groupBoxFolderSuffixOptions.PerformLayout();
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            this.StartPosition = FormStartPosition.CenterParent;
 
+            // メインフォームと同じレイアウトを使用（仕様書5.2.1）
+            InitializeTaskEditControls();
+            SetupTaskEditLayout();
+
+            this.ResumeLayout(false);
+        }
+
+        /// <summary>
+        /// タスク編集コントロールの初期化
+        /// </summary>
+        private void InitializeTaskEditControls()
+        {
+            // 基本設定グループ
+            this.groupBoxBasicSettings = new GroupBox();
+            this.labelTaskName = new Label();
+            this.textBoxTaskName = new TextBox();
+            this.checkBoxCreateFile = new CheckBox();
+            this.checkBoxCreateFolder = new CheckBox();
+
+            // ファイルパス設定グループ
+            this.groupBoxFilePaths = new GroupBox();
+            this.labelSourcePath = new Label();
+            this.textBoxSourcePath = new TextBox();
+            this.buttonBrowseSource = new Button();
+            this.labelDestinationPath = new Label();
+            this.textBoxDestinationPath = new TextBox();
+            this.buttonBrowseDestination = new Button();
+
+            // ファイル名設定グループ
+            this.groupBoxFileNameSettings = new GroupBox();
+            this.labelPrefix = new Label();
+            this.textBoxPrefix = new TextBox();
+            this.labelSuffix = new Label();
+            this.textBoxSuffix = new TextBox();
+            
+            // ラジオボタンに変更（プレフィックス日付位置）
+            this.groupBoxPrefixOptions = new GroupBox();
+            this.radioPrefixDateBefore = new RadioButton();
+            this.radioPrefixDateAfter = new RadioButton();
+            this.radioPrefixDateNone = new RadioButton();
+            
+            // ラジオボタンに変更（サフィックス日付位置）
+            this.groupBoxSuffixOptions = new GroupBox();
+            this.radioSuffixDateBefore = new RadioButton();
+            this.radioSuffixDateAfter = new RadioButton();
+            this.radioSuffixDateNone = new RadioButton();
+
+            // フォルダ名設定グループ
+            this.groupBoxFolderNameSettings = new GroupBox();
+            this.labelFolderBaseName = new Label();
+            this.textBoxFolderBaseName = new TextBox();
+            this.labelFolderPrefix = new Label();
+            this.textBoxFolderPrefix = new TextBox();
+            this.labelFolderSuffix = new Label();
+            this.textBoxFolderSuffix = new TextBox();
+            
+            // ラジオボタンに変更（フォルダプレフィックス日付位置）
+            this.groupBoxFolderPrefixOptions = new GroupBox();
+            this.radioFolderPrefixDateBefore = new RadioButton();
+            this.radioFolderPrefixDateAfter = new RadioButton();
+            this.radioFolderPrefixDateNone = new RadioButton();
+            
+            // ラジオボタンに変更（フォルダサフィックス日付位置）
+            this.groupBoxFolderSuffixOptions = new GroupBox();
+            this.radioFolderSuffixDateBefore = new RadioButton();
+            this.radioFolderSuffixDateAfter = new RadioButton();
+            this.radioFolderSuffixDateNone = new RadioButton();
+
+            // 文字列置換グループ
+            this.groupBoxFileReplace = new GroupBox();
+            this.labelReplaceFrom = new Label();
+            this.textBoxReplaceFrom = new TextBox();
+            this.labelReplaceTo = new Label();
+            this.textBoxReplaceTo = new TextBox();
+
+            // 共通設定グループ
+            this.groupBoxCommonSettings = new GroupBox();
+            this.labelDateOffset = new Label();
+            this.numericUpDownDateOffset = new NumericUpDown();
+            this.labelPreview = new Label();
+            this.textBoxPreview = new TextBox();
+
+            // スケジュール設定グループ
+            this.groupBoxScheduleSettings = new GroupBox();
+            this.labelScheduleType = new Label();
+            this.comboBoxScheduleType = new ComboBox();
+            this.labelStartDateTime = new Label();
+            this.dateTimePickerStart = new DateTimePicker();
+
+            // ボタン
+            this.buttonSaveTask = new Button();
+            this.buttonCancel = new Button();
+        }
+
+        /// <summary>
+        /// タスク編集レイアウトの設定
+        /// </summary>
+        private void SetupTaskEditLayout()
+        {
+            this.SuspendLayout();
+
+            // 基本設定グループ（メイン画面と同じサイズ）
+            this.groupBoxBasicSettings.Text = "基本設定";
+            this.groupBoxBasicSettings.Location = new Point(10, 10);
+            this.groupBoxBasicSettings.Size = new Size(560, 90);
+
+            this.labelTaskName.Text = "タスク名:";
+            this.labelTaskName.Location = new Point(15, 25);
+            this.labelTaskName.Size = new Size(80, 20);
+
+            this.textBoxTaskName.Location = new Point(100, 22);
+            this.textBoxTaskName.Size = new Size(440, 23);
+
+            this.checkBoxCreateFile.Text = "ファイルコピー";
+            this.checkBoxCreateFile.Location = new Point(15, 55);
+            this.checkBoxCreateFile.Size = new Size(160, 25);
+
+            this.checkBoxCreateFolder.Text = "フォルダ作成";
+            this.checkBoxCreateFolder.Location = new Point(190, 55);
+            this.checkBoxCreateFolder.Size = new Size(160, 25);
+
+            this.groupBoxBasicSettings.Controls.AddRange(new Control[]
+            {
+                this.labelTaskName, this.textBoxTaskName,
+                this.checkBoxCreateFile, this.checkBoxCreateFolder
+            });
+
+            // ファイルパス設定グループ（メイン画面と同じレイアウト）
+            this.groupBoxFilePaths.Text = "ファイルパス設定";
+            this.groupBoxFilePaths.Location = new Point(10, 110);
+            this.groupBoxFilePaths.Size = new Size(1160, 80);
+
+            this.labelSourcePath.Text = "コピー元:";
+            this.labelSourcePath.Location = new Point(15, 25);
+            this.labelSourcePath.Size = new Size(80, 20);
+
+            this.textBoxSourcePath.Location = new Point(100, 22);
+            this.textBoxSourcePath.Size = new Size(970, 23);
+
+            this.buttonBrowseSource.Text = "参照...";
+            this.buttonBrowseSource.Location = new Point(1080, 21);
+            this.buttonBrowseSource.Size = new Size(70, 28);
+
+            this.labelDestinationPath.Text = "作成先:";
+            this.labelDestinationPath.Location = new Point(15, 50);
+            this.labelDestinationPath.Size = new Size(80, 20);
+
+            this.textBoxDestinationPath.Location = new Point(100, 47);
+            this.textBoxDestinationPath.Size = new Size(970, 23);
+
+            this.buttonBrowseDestination.Text = "参照...";
+            this.buttonBrowseDestination.Location = new Point(1080, 46);
+            this.buttonBrowseDestination.Size = new Size(70, 28);
+
+            this.groupBoxFilePaths.Controls.AddRange(new Control[]
+            {
+                this.labelSourcePath, this.textBoxSourcePath, this.buttonBrowseSource,
+                this.labelDestinationPath, this.textBoxDestinationPath, this.buttonBrowseDestination
+            });
+
+            // ファイル名設定グループの設定を呼び出し
+            SetupFileNameSettingsControls();
+
+            // フォルダ名設定グループ（メイン画面と同じレイアウト）
+            this.groupBoxFolderNameSettings.Text = "フォルダ名設定";
+            this.groupBoxFolderNameSettings.Location = new Point(10, 460);
+            this.groupBoxFolderNameSettings.Size = new Size(650, 180);
+
+            SetupFolderNameSettingsControls();
+
+            // 共通設定グループ（メイン画面と同じレイアウト）
+            this.groupBoxCommonSettings.Text = "共通設定・プレビュー";
+            this.groupBoxCommonSettings.Location = new Point(10, 650);
+            this.groupBoxCommonSettings.Size = new Size(1160, 110);
+
+            SetupCommonSettingsControls();
+
+            // スケジュール設定グループ（メイン画面と同じレイアウト）
+            this.groupBoxScheduleSettings.Text = "スケジュール設定";
+            this.groupBoxScheduleSettings.Location = new Point(580, 10);
+            this.groupBoxScheduleSettings.Size = new Size(590, 120);
+
+            SetupScheduleSettingsControls();
+
+            // ボタン（メイン画面と同じ配置）
+            this.buttonSaveTask.Text = "保存";
+            this.buttonSaveTask.Location = new Point(480, 770);
+            this.buttonSaveTask.Size = new Size(160, 40);
+            this.buttonSaveTask.BackColor = Color.FromArgb(0, 120, 215);
+            this.buttonSaveTask.ForeColor = Color.White;
+            this.buttonSaveTask.FlatStyle = FlatStyle.Flat;
+
+            this.buttonCancel.Text = "キャンセル";
+            this.buttonCancel.Location = new Point(650, 770);
+            this.buttonCancel.Size = new Size(160, 40);
+            this.buttonCancel.BackColor = Color.FromArgb(243, 243, 243);
+            this.buttonCancel.FlatStyle = FlatStyle.Flat;
+
+            // フォームにコントロールを追加
+            this.Controls.AddRange(new Control[]
+            {
+                this.groupBoxBasicSettings, this.groupBoxFilePaths,
+                this.groupBoxFileNameSettings, this.groupBoxFolderNameSettings,
+                this.groupBoxCommonSettings, this.groupBoxScheduleSettings,
+                this.buttonSaveTask, this.buttonCancel
+            });
+
+            this.ResumeLayout(false);
+        }
+
+        /// <summary>
+        /// ファイル名設定コントロールの詳細設定（メイン画面と同じ）
+        /// </summary>
+        private void SetupFileNameSettingsControls()
+        {
+            // ファイル名設定グループの位置とサイズを正しく設定
+            this.groupBoxFileNameSettings.Text = "ファイル名設定";
+            this.groupBoxFileNameSettings.Location = new Point(10, 200);
+            this.groupBoxFileNameSettings.Size = new Size(650, 250);
+
+            this.labelPrefix.Text = "接頭語:";
+            this.labelPrefix.Location = new Point(15, 25);
+            this.labelPrefix.Size = new Size(60, 20);
+
+            this.textBoxPrefix.Location = new Point(80, 22);
+            this.textBoxPrefix.Size = new Size(120, 23);
+
+            this.labelSuffix.Text = "接尾語:";
+            this.labelSuffix.Location = new Point(220, 25);
+            this.labelSuffix.Size = new Size(60, 20);
+
+            this.textBoxSuffix.Location = new Point(285, 22);
+            this.textBoxSuffix.Size = new Size(120, 23);
+
+            // 接頭語オプション（ラジオボタンに変更）
+            this.groupBoxPrefixOptions.Text = "接頭語日付位置";
+            this.groupBoxPrefixOptions.Location = new Point(15, 55);
+            this.groupBoxPrefixOptions.Size = new Size(600, 50);
+
+            this.radioPrefixDateBefore.Text = "日付＋接頭語";
+            this.radioPrefixDateBefore.Location = new Point(10, 20);
+            this.radioPrefixDateBefore.Size = new Size(120, 23);
+
+            this.radioPrefixDateAfter.Text = "接頭語＋日付";
+            this.radioPrefixDateAfter.Location = new Point(150, 20);
+            this.radioPrefixDateAfter.Size = new Size(120, 23);
+
+            this.radioPrefixDateNone.Text = "なし";
+            this.radioPrefixDateNone.Location = new Point(290, 20);
+            this.radioPrefixDateNone.Size = new Size(60, 23);
+            this.radioPrefixDateNone.Checked = true;
+
+            this.groupBoxPrefixOptions.Controls.AddRange(new Control[]
+            {
+                this.radioPrefixDateBefore, this.radioPrefixDateAfter, this.radioPrefixDateNone
+            });
+
+            // 接尾語オプション（ラジオボタンに変更）
+            this.groupBoxSuffixOptions.Text = "接尾語日付位置";
+            this.groupBoxSuffixOptions.Location = new Point(15, 115);
+            this.groupBoxSuffixOptions.Size = new Size(600, 50);
+
+            this.radioSuffixDateBefore.Text = "日付＋接尾語";
+            this.radioSuffixDateBefore.Location = new Point(10, 20);
+            this.radioSuffixDateBefore.Size = new Size(120, 23);
+
+            this.radioSuffixDateAfter.Text = "接尾語＋日付";
+            this.radioSuffixDateAfter.Location = new Point(150, 20);
+            this.radioSuffixDateAfter.Size = new Size(120, 23);
+
+            this.radioSuffixDateNone.Text = "なし";
+            this.radioSuffixDateNone.Location = new Point(290, 20);
+            this.radioSuffixDateNone.Size = new Size(60, 23);
+            this.radioSuffixDateNone.Checked = true;
+
+            this.groupBoxSuffixOptions.Controls.AddRange(new Control[]
+            {
+                this.radioSuffixDateBefore, this.radioSuffixDateAfter, this.radioSuffixDateNone
+            });
+
+            // 文字列置換（レイアウト改善）
+            this.groupBoxFileReplace.Text = "文字列置換";
+            this.groupBoxFileReplace.Location = new Point(15, 175);
+            this.groupBoxFileReplace.Size = new Size(600, 60);
+
+            this.labelReplaceFrom.Text = "置換前:";
+            this.labelReplaceFrom.Location = new Point(10, 23);
+            this.labelReplaceFrom.Size = new Size(60, 23);
+
+            this.textBoxReplaceFrom.Location = new Point(75, 20);
+            this.textBoxReplaceFrom.Size = new Size(150, 23);
+
+            this.labelReplaceTo.Text = "置換後:";
+            this.labelReplaceTo.Location = new Point(250, 23);
+            this.labelReplaceTo.Size = new Size(60, 23);
+
+            this.textBoxReplaceTo.Location = new Point(315, 20);
+            this.textBoxReplaceTo.Size = new Size(150, 23);
+
+            this.groupBoxFileReplace.Controls.AddRange(new Control[]
+            {
+                this.labelReplaceFrom, this.textBoxReplaceFrom,
+                this.labelReplaceTo, this.textBoxReplaceTo
+            });
+
+            this.groupBoxFileNameSettings.Controls.AddRange(new Control[]
+            {
+                this.labelPrefix, this.textBoxPrefix,
+                this.labelSuffix, this.textBoxSuffix,
+                this.groupBoxPrefixOptions, this.groupBoxSuffixOptions,
+                this.groupBoxFileReplace
+            });
+        }
+
+        /// <summary>
+        /// フォルダ名設定コントロールの詳細設定（メイン画面と同じ）
+        /// </summary>
+        private void SetupFolderNameSettingsControls()
+        {
+            this.labelFolderBaseName.Text = "ベース名:";
+            this.labelFolderBaseName.Location = new Point(15, 25);
+            this.labelFolderBaseName.Size = new Size(80, 20);
+
+            this.textBoxFolderBaseName.Location = new Point(100, 22);
+            this.textBoxFolderBaseName.Size = new Size(120, 23);
+            this.textBoxFolderBaseName.Text = "Folder";
+
+            this.labelFolderPrefix.Text = "接頭語:";
+            this.labelFolderPrefix.Location = new Point(240, 25);
+            this.labelFolderPrefix.Size = new Size(60, 20);
+
+            this.textBoxFolderPrefix.Location = new Point(305, 22);
+            this.textBoxFolderPrefix.Size = new Size(100, 23);
+
+            this.labelFolderSuffix.Text = "接尾語:";
+            this.labelFolderSuffix.Location = new Point(440, 25);
+            this.labelFolderSuffix.Size = new Size(60, 20);
+
+            this.textBoxFolderSuffix.Location = new Point(505, 22);
+            this.textBoxFolderSuffix.Size = new Size(100, 23);
+
+            // フォルダ接頭語オプション（ラジオボタンに変更）
+            this.groupBoxFolderPrefixOptions.Text = "接頭語日付位置";
+            this.groupBoxFolderPrefixOptions.Location = new Point(15, 55);
+            this.groupBoxFolderPrefixOptions.Size = new Size(600, 50);
+
+            this.radioFolderPrefixDateBefore.Text = "日付＋接頭語";
+            this.radioFolderPrefixDateBefore.Location = new Point(10, 20);
+            this.radioFolderPrefixDateBefore.Size = new Size(120, 23);
+
+            this.radioFolderPrefixDateAfter.Text = "接頭語＋日付";
+            this.radioFolderPrefixDateAfter.Location = new Point(150, 20);
+            this.radioFolderPrefixDateAfter.Size = new Size(120, 23);
+
+            this.radioFolderPrefixDateNone.Text = "なし";
+            this.radioFolderPrefixDateNone.Location = new Point(290, 20);
+            this.radioFolderPrefixDateNone.Size = new Size(60, 23);
+            this.radioFolderPrefixDateNone.Checked = true;
+
+            this.groupBoxFolderPrefixOptions.Controls.AddRange(new Control[]
+            {
+                this.radioFolderPrefixDateBefore, this.radioFolderPrefixDateAfter, this.radioFolderPrefixDateNone
+            });
+
+            // フォルダ接尾語オプション（ラジオボタンに変更）
+            this.groupBoxFolderSuffixOptions.Text = "接尾語日付位置";
+            this.groupBoxFolderSuffixOptions.Location = new Point(15, 115);
+            this.groupBoxFolderSuffixOptions.Size = new Size(600, 50);
+
+            this.radioFolderSuffixDateBefore.Text = "日付＋接尾語";
+            this.radioFolderSuffixDateBefore.Location = new Point(10, 20);
+            this.radioFolderSuffixDateBefore.Size = new Size(120, 23);
+
+            this.radioFolderSuffixDateAfter.Text = "接尾語＋日付";
+            this.radioFolderSuffixDateAfter.Location = new Point(150, 20);
+            this.radioFolderSuffixDateAfter.Size = new Size(120, 23);
+
+            this.radioFolderSuffixDateNone.Text = "なし";
+            this.radioFolderSuffixDateNone.Location = new Point(290, 20);
+            this.radioFolderSuffixDateNone.Size = new Size(60, 23);
+            this.radioFolderSuffixDateNone.Checked = true;
+
+            this.groupBoxFolderSuffixOptions.Controls.AddRange(new Control[]
+            {
+                this.radioFolderSuffixDateBefore, this.radioFolderSuffixDateAfter, this.radioFolderSuffixDateNone
+            });
+
+            this.groupBoxFolderNameSettings.Controls.AddRange(new Control[]
+            {
+                this.labelFolderBaseName, this.textBoxFolderBaseName,
+                this.labelFolderPrefix, this.textBoxFolderPrefix,
+                this.labelFolderSuffix, this.textBoxFolderSuffix,
+                this.groupBoxFolderPrefixOptions, this.groupBoxFolderSuffixOptions
+            });
+        }
+
+        /// <summary>
+        /// 共通設定コントロールの詳細設定（メイン画面と同じ）
+        /// </summary>
+        private void SetupCommonSettingsControls()
+        {
+            this.labelDateOffset.Text = "日付オフセット（日）:";
+            this.labelDateOffset.Location = new Point(15, 25);
+            this.labelDateOffset.Size = new Size(140, 20);
+
+            this.numericUpDownDateOffset.Location = new Point(160, 22);
+            this.numericUpDownDateOffset.Size = new Size(80, 23);
+            this.numericUpDownDateOffset.Minimum = -365;
+            this.numericUpDownDateOffset.Maximum = 365;
+            this.numericUpDownDateOffset.Value = 0;
+
+            this.labelPreview.Text = "プレビュー:";
+            this.labelPreview.Location = new Point(15, 55);
+            this.labelPreview.Size = new Size(80, 33);
+
+            this.textBoxPreview.Location = new Point(100, 52);
+            this.textBoxPreview.Size = new Size(1040, 40);
+            this.textBoxPreview.Multiline = true;
+            this.textBoxPreview.ReadOnly = true;
+            this.textBoxPreview.BackColor = Color.FromArgb(248, 248, 248);
+
+            this.groupBoxCommonSettings.Controls.AddRange(new Control[]
+            {
+                this.labelDateOffset, this.numericUpDownDateOffset,
+                this.labelPreview, this.textBoxPreview
+            });
+        }
+
+        /// <summary>
+        /// スケジュール設定コントロールの詳細設定（メイン画面と同じ）
+        /// </summary>
+        private void SetupScheduleSettingsControls()
+        {
+            this.labelScheduleType.Text = "スケジュール:";
+            this.labelScheduleType.Location = new Point(15, 25);
+            this.labelScheduleType.Size = new Size(80, 20);
+
+            this.comboBoxScheduleType.Location = new Point(100, 22);
+            this.comboBoxScheduleType.Size = new Size(120, 23);
+            this.comboBoxScheduleType.DropDownStyle = ComboBoxStyle.DropDownList;
+            this.comboBoxScheduleType.Items.AddRange(new string[] { "今すぐ実行", "毎日", "毎週", "毎月" });
+
+            this.labelStartDateTime.Text = "開始日時:";
+            this.labelStartDateTime.Location = new Point(235, 25);
+            this.labelStartDateTime.Size = new Size(70, 23);
+
+            this.dateTimePickerStart.Location = new Point(310, 22);
+            this.dateTimePickerStart.Size = new Size(170, 25);
+            this.dateTimePickerStart.Format = DateTimePickerFormat.Custom;
+            this.dateTimePickerStart.CustomFormat = "yyyy/MM/dd HH:mm";
+
+            this.groupBoxScheduleSettings.Controls.AddRange(new Control[]
+            {
+                this.labelScheduleType, this.comboBoxScheduleType,
+                this.labelStartDateTime, this.dateTimePickerStart
+            });
         }
 
         #endregion
 
-        private System.Windows.Forms.TextBox textBoxTaskName;
-        private System.Windows.Forms.Label labelTaskName;
-        private System.Windows.Forms.TextBox textBoxTime;
-        private System.Windows.Forms.Label labelTime;
-        private System.Windows.Forms.TextBox textBoxSourceFolder;
-        private System.Windows.Forms.Label labelSourceFolder;
-        private System.Windows.Forms.Button buttonSourceFolderBrowse;
-        private System.Windows.Forms.TextBox textBoxDestinationFolder;
-        private System.Windows.Forms.Label labelDestinationFolder;
-        private System.Windows.Forms.Button buttonDestinationFolderBrowse;
-        private System.Windows.Forms.TextBox textBoxFileName;
-        private System.Windows.Forms.Label labelFileName;
-        private System.Windows.Forms.TextBox textBoxPrefix;
-        private System.Windows.Forms.Label labelPrefix;
-        private System.Windows.Forms.TextBox textBoxSuffix;
-        private System.Windows.Forms.Label labelSuffix;
-        private System.Windows.Forms.CheckBox checkBoxEnableTask;
-        private System.Windows.Forms.CheckBox checkBoxCopyFiles;
-        private System.Windows.Forms.CheckBox checkBoxCreateFolder;
-        private System.Windows.Forms.ComboBox comboBoxInterval;
-        private System.Windows.Forms.Label labelInterval;
-        private System.Windows.Forms.TextBox textBoxDateOffset;
-        private System.Windows.Forms.Label labelDateOffset;
-        private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.Button buttonOK;
-        private System.Windows.Forms.Button buttonCancel;
-        private System.Windows.Forms.TextBox textBoxPreview;
-        private System.Windows.Forms.Label labelPreview;
-        private System.Windows.Forms.TextBox textBoxFolderBaseName;
-        private System.Windows.Forms.Label labelFolderBaseName;
-        private System.Windows.Forms.TextBox textBoxFolderPrefix;
-        private System.Windows.Forms.Label labelFolderPrefix;
-        private System.Windows.Forms.TextBox textBoxFolderSuffix;
-        private System.Windows.Forms.Label labelFolderSuffix;
-        private System.Windows.Forms.GroupBox groupBoxPrefixOptions;
-        private System.Windows.Forms.RadioButton checkBoxPrefixDateBefore;
-        private System.Windows.Forms.RadioButton checkBoxPrefixDateAfter;
-        private System.Windows.Forms.GroupBox groupBoxSuffixOptions;
-        private System.Windows.Forms.RadioButton checkBoxSuffixDateBefore;
-        private System.Windows.Forms.RadioButton checkBoxSuffixDateAfter;
-        private System.Windows.Forms.GroupBox groupBoxFolderPrefixOptions;
-        private System.Windows.Forms.RadioButton checkBoxFolderPrefixDateBefore;
-        private System.Windows.Forms.RadioButton checkBoxFolderPrefixDateAfter;
-        private System.Windows.Forms.GroupBox groupBoxFolderSuffixOptions;
-        private System.Windows.Forms.RadioButton checkBoxFolderSuffixDateBefore;
-        private System.Windows.Forms.RadioButton checkBoxFolderSuffixDateAfter;
-        private System.Windows.Forms.GroupBox groupBoxFileReplace;
-        private System.Windows.Forms.Label labelReplaceFrom;
-        private System.Windows.Forms.TextBox textBoxReplaceFrom;
-        private System.Windows.Forms.Label labelReplaceTo;
-        private System.Windows.Forms.TextBox textBoxReplaceTo;
+        #region コントロール宣言
+
+        // 基本設定
+        private GroupBox groupBoxBasicSettings;
+        private Label labelTaskName;
+        private TextBox textBoxTaskName;
+        private CheckBox checkBoxCreateFile;
+        private CheckBox checkBoxCreateFolder;
+
+        // ファイルパス設定
+        private GroupBox groupBoxFilePaths;
+        private Label labelSourcePath;
+        private TextBox textBoxSourcePath;
+        private Button buttonBrowseSource;
+        private Label labelDestinationPath;
+        private TextBox textBoxDestinationPath;
+        private Button buttonBrowseDestination;
+
+        // ファイル名設定
+        private GroupBox groupBoxFileNameSettings;
+        private Label labelPrefix;
+        private TextBox textBoxPrefix;
+        private Label labelSuffix;
+        private TextBox textBoxSuffix;
+        private GroupBox groupBoxPrefixOptions;
+        private RadioButton radioPrefixDateBefore;
+        private RadioButton radioPrefixDateAfter;
+        private RadioButton radioPrefixDateNone;
+        private GroupBox groupBoxSuffixOptions;
+        private RadioButton radioSuffixDateBefore;
+        private RadioButton radioSuffixDateAfter;
+        private RadioButton radioSuffixDateNone;
+
+        // フォルダ名設定
+        private GroupBox groupBoxFolderNameSettings;
+        private Label labelFolderBaseName;
+        private TextBox textBoxFolderBaseName;
+        private Label labelFolderPrefix;
+        private TextBox textBoxFolderPrefix;
+        private Label labelFolderSuffix;
+        private TextBox textBoxFolderSuffix;
+        private GroupBox groupBoxFolderPrefixOptions;
+        private RadioButton radioFolderPrefixDateBefore;
+        private RadioButton radioFolderPrefixDateAfter;
+        private RadioButton radioFolderPrefixDateNone;
+        private GroupBox groupBoxFolderSuffixOptions;
+        private RadioButton radioFolderSuffixDateBefore;
+        private RadioButton radioFolderSuffixDateAfter;
+        private RadioButton radioFolderSuffixDateNone;
+
+        // 文字列置換
+        private GroupBox groupBoxFileReplace;
+        private Label labelReplaceFrom;
+        private TextBox textBoxReplaceFrom;
+        private Label labelReplaceTo;
+        private TextBox textBoxReplaceTo;
+
+        // 共通設定
+        private GroupBox groupBoxCommonSettings;
+        private Label labelDateOffset;
+        private NumericUpDown numericUpDownDateOffset;
+        private Label labelPreview;
+        private TextBox textBoxPreview;
+
+        // スケジュール設定
+        private GroupBox groupBoxScheduleSettings;
+        private Label labelScheduleType;
+        private ComboBox comboBoxScheduleType;
+        private Label labelStartDateTime;
+        private DateTimePicker dateTimePickerStart;
+
+        // ボタン
+        private Button buttonSaveTask;
+        private Button buttonCancel;
+
+        #endregion
     }
 }

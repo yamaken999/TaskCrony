@@ -1,205 +1,207 @@
-using System;
-using System.Drawing;
-using System.Windows.Forms;
-
 namespace TaskCrony;
 
 /// <summary>
-/// モダンテーマの色定義とスタイル適用機能を提供する静的クラス
+/// モダンテーマクラス（Windows 11風のスタイル適用）
 /// </summary>
 public static class ModernTheme
 {
-    // カラーパレット
-    public static readonly Color PrimaryColor = Color.FromArgb(0, 120, 215); // Windows Blue
-    public static readonly Color SecondaryColor = Color.FromArgb(243, 243, 243); // Light Gray
-    public static readonly Color AccentColor = Color.FromArgb(16, 110, 190); // Darker Blue
-    public static readonly Color BackgroundColor = Color.FromArgb(255, 255, 255); // White
-    public static readonly Color SurfaceColor = Color.FromArgb(248, 249, 250); // Very Light Gray
-    public static readonly Color TextColor = Color.FromArgb(50, 49, 48); // Dark Gray
-    public static readonly Color BorderColor = Color.FromArgb(200, 200, 200); // Medium Gray
+    #region カラー定義
+
+    public static readonly Color BackgroundColor = Color.White;
+    public static readonly Color PrimaryColor = Color.FromArgb(0, 120, 215);
+    public static readonly Color SecondaryColor = Color.FromArgb(243, 243, 243);
+    public static readonly Color TextColor = Color.FromArgb(32, 32, 32);
+    public static readonly Color BorderColor = Color.FromArgb(200, 200, 200);
+    public static readonly Color AccentColor = Color.FromArgb(0, 95, 184);
+
+    #endregion
+
+    #region テーマ適用メソッド
 
     /// <summary>
-    /// フォーム全体にモダンテーマを適用
+    /// フォームにモダンテーマを適用
     /// </summary>
+    /// <param name="form">適用対象のフォーム</param>
     public static void ApplyToForm(Form form)
     {
         form.BackColor = BackgroundColor;
         form.ForeColor = TextColor;
-        ApplyToControls(form);
+        
+        // フォーム内の全コントロールにテーマを適用
+        ApplyToControls(form.Controls);
     }
 
     /// <summary>
-    /// コントロールにモダンスタイルを再帰的に適用
+    /// コントロールコレクションにテーマを適用
     /// </summary>
-    public static void ApplyToControls(Control parent)
+    /// <param name="controls">コントロールコレクション</param>
+    private static void ApplyToControls(Control.ControlCollection controls)
     {
-        foreach (Control control in parent.Controls)
+        foreach (Control control in controls)
         {
-            switch (control)
-            {
-                case Button button:
-                    ApplyToButton(button);
-                    break;
-                case TextBox textBox:
-                    ApplyToTextBox(textBox);
-                    break;
-                case GroupBox groupBox:
-                    ApplyToGroupBox(groupBox);
-                    break;
-                case TabControl tabControl:
-                    ApplyToTabControl(tabControl);
-                    break;
-                case ListView listView:
-                    ApplyToListView(listView);
-                    break;
-                case Label label:
-                    ApplyToLabel(label);
-                    break;
-                case CheckBox checkBox:
-                    ApplyToCheckBox(checkBox);
-                    break;
-                case RadioButton radioButton:
-                    ApplyToRadioButton(radioButton);
-                    break;
-                case ComboBox comboBox:
-                    ApplyToComboBox(comboBox);
-                    break;
-            }
-
-            // 子コントロールにも再帰的に適用
+            ApplyToControl(control);
+            
+            // 子コントロールがある場合は再帰的に適用
             if (control.HasChildren)
             {
-                ApplyToControls(control);
+                ApplyToControls(control.Controls);
             }
         }
     }
 
     /// <summary>
-    /// ボタンにモダンスタイルを適用
+    /// 個別コントロールにテーマを適用
     /// </summary>
-    public static void ApplyToButton(Button button)
+    /// <param name="control">適用対象のコントロール</param>
+    private static void ApplyToControl(Control control)
     {
+        switch (control)
+        {
+            case Button button:
+                ApplyButtonTheme(button);
+                break;
+            case TextBox textBox:
+                ApplyTextBoxTheme(textBox);
+                break;
+            case ComboBox comboBox:
+                ApplyComboBoxTheme(comboBox);
+                break;
+            case CheckBox checkBox:
+                ApplyCheckBoxTheme(checkBox);
+                break;
+            case GroupBox groupBox:
+                ApplyGroupBoxTheme(groupBox);
+                break;
+            case ListView listView:
+                ApplyListViewTheme(listView);
+                break;
+            case TabControl tabControl:
+                ApplyTabControlTheme(tabControl);
+                break;
+            case NumericUpDown numericUpDown:
+                ApplyNumericUpDownTheme(numericUpDown);
+                break;
+            case DateTimePicker dateTimePicker:
+                ApplyDateTimePickerTheme(dateTimePicker);
+                break;
+            default:
+                // 基本的なテーマ適用
+                control.BackColor = BackgroundColor;
+                control.ForeColor = TextColor;
+                break;
+        }
+    }
+
+    #endregion
+
+    #region 個別コントロールテーマ
+
+    /// <summary>
+    /// ボタンテーマを適用
+    /// </summary>
+    private static void ApplyButtonTheme(Button button)
+    {
+        if (button.BackColor == Color.FromArgb(0, 120, 215) || 
+            button.BackColor == Color.FromArgb(196, 43, 28))
+        {
+            // 既にカスタムカラーが設定されている場合はそのまま
+            button.FlatStyle = FlatStyle.Flat;
+            button.FlatAppearance.BorderSize = 0;
+            return;
+        }
+
+        button.BackColor = SecondaryColor;
+        button.ForeColor = TextColor;
         button.FlatStyle = FlatStyle.Flat;
+        button.FlatAppearance.BorderColor = BorderColor;
         button.FlatAppearance.BorderSize = 1;
-        button.FlatAppearance.BorderColor = PrimaryColor;
-        button.BackColor = PrimaryColor;
-        button.ForeColor = Color.White;
-        button.Font = new Font("メイリオ", 9F, FontStyle.Regular);
-        button.Cursor = Cursors.Hand;
-
-        // 既存のイベントハンドラーを削除
-        button.MouseEnter -= OnButtonMouseEnter;
-        button.MouseLeave -= OnButtonMouseLeave;
-        
-        // ホバー効果を追加
-        button.MouseEnter += OnButtonMouseEnter;
-        button.MouseLeave += OnButtonMouseLeave;
-    }
-
-    private static void OnButtonMouseEnter(object? sender, EventArgs e)
-    {
-        if (sender is Button button)
-        {
-            button.BackColor = AccentColor;
-            button.FlatAppearance.BorderColor = AccentColor;
-        }
-    }
-
-    private static void OnButtonMouseLeave(object? sender, EventArgs e)
-    {
-        if (sender is Button button)
-        {
-            button.BackColor = PrimaryColor;
-            button.FlatAppearance.BorderColor = PrimaryColor;
-        }
+        button.FlatAppearance.MouseOverBackColor = Color.FromArgb(229, 229, 229);
+        button.FlatAppearance.MouseDownBackColor = Color.FromArgb(204, 204, 204);
     }
 
     /// <summary>
-    /// テキストボックスにモダンスタイルを適用
+    /// テキストボックステーマを適用
     /// </summary>
-    public static void ApplyToTextBox(TextBox textBox)
+    private static void ApplyTextBoxTheme(TextBox textBox)
     {
-        textBox.BorderStyle = BorderStyle.FixedSingle;
-        textBox.BackColor = Color.White;
+        textBox.BackColor = BackgroundColor;
         textBox.ForeColor = TextColor;
-        textBox.Font = new Font("メイリオ", 9F, FontStyle.Regular);
+        textBox.BorderStyle = BorderStyle.FixedSingle;
     }
 
     /// <summary>
-    /// グループボックスにモダンスタイルを適用
+    /// コンボボックステーマを適用
     /// </summary>
-    public static void ApplyToGroupBox(GroupBox groupBox)
+    private static void ApplyComboBoxTheme(ComboBox comboBox)
     {
-        groupBox.BackColor = SurfaceColor;
-        groupBox.ForeColor = TextColor;
-        groupBox.Font = new Font("メイリオ", 9F, FontStyle.Bold);
+        comboBox.BackColor = BackgroundColor;
+        comboBox.ForeColor = TextColor;
+        comboBox.FlatStyle = FlatStyle.Flat;
     }
 
     /// <summary>
-    /// タブコントロールにモダンスタイルを適用
+    /// チェックボックステーマを適用
     /// </summary>
-    public static void ApplyToTabControl(TabControl tabControl)
+    private static void ApplyCheckBoxTheme(CheckBox checkBox)
+    {
+        checkBox.BackColor = BackgroundColor;
+        checkBox.ForeColor = TextColor;
+        checkBox.FlatStyle = FlatStyle.Flat;
+    }
+
+    /// <summary>
+    /// グループボックステーマを適用
+    /// </summary>
+    private static void ApplyGroupBoxTheme(GroupBox groupBox)
+    {
+        groupBox.BackColor = BackgroundColor;
+        groupBox.ForeColor = TextColor;
+        groupBox.FlatStyle = FlatStyle.Flat;
+    }
+
+    /// <summary>
+    /// リストビューテーマを適用
+    /// </summary>
+    private static void ApplyListViewTheme(ListView listView)
+    {
+        listView.BackColor = BackgroundColor;
+        listView.ForeColor = TextColor;
+        listView.BorderStyle = BorderStyle.FixedSingle;
+    }
+
+    /// <summary>
+    /// タブコントロールテーマを適用
+    /// </summary>
+    private static void ApplyTabControlTheme(TabControl tabControl)
     {
         tabControl.BackColor = BackgroundColor;
+        tabControl.ForeColor = TextColor;
+        
         foreach (TabPage tabPage in tabControl.TabPages)
         {
             tabPage.BackColor = BackgroundColor;
             tabPage.ForeColor = TextColor;
-            tabPage.Font = new Font("メイリオ", 9F, FontStyle.Regular);
         }
     }
 
     /// <summary>
-    /// リストビューにモダンスタイルを適用
+    /// NumericUpDownテーマを適用
     /// </summary>
-    public static void ApplyToListView(ListView listView)
+    private static void ApplyNumericUpDownTheme(NumericUpDown numericUpDown)
     {
-        listView.BackColor = Color.White;
-        listView.ForeColor = TextColor;
-        listView.BorderStyle = BorderStyle.FixedSingle;
-        listView.Font = new Font("メイリオ", 9F, FontStyle.Regular);
-        listView.FullRowSelect = true;
-        listView.GridLines = true;
+        numericUpDown.BackColor = BackgroundColor;
+        numericUpDown.ForeColor = TextColor;
+        numericUpDown.BorderStyle = BorderStyle.FixedSingle;
     }
 
     /// <summary>
-    /// ラベルにモダンスタイルを適用
+    /// DateTimePickerテーマを適用
     /// </summary>
-    public static void ApplyToLabel(Label label)
+    private static void ApplyDateTimePickerTheme(DateTimePicker dateTimePicker)
     {
-        label.ForeColor = TextColor;
-        label.Font = new Font("メイリオ", 9F, FontStyle.Regular);
-        label.BackColor = Color.Transparent;
+        dateTimePicker.BackColor = BackgroundColor;
+        dateTimePicker.ForeColor = TextColor;
     }
 
-    /// <summary>
-    /// チェックボックスにモダンスタイルを適用
-    /// </summary>
-    public static void ApplyToCheckBox(CheckBox checkBox)
-    {
-        checkBox.ForeColor = TextColor;
-        checkBox.Font = new Font("メイリオ", 9F, FontStyle.Regular);
-        checkBox.BackColor = Color.Transparent;
-    }
-
-    /// <summary>
-    /// ラジオボタンにモダンスタイルを適用
-    /// </summary>
-    public static void ApplyToRadioButton(RadioButton radioButton)
-    {
-        radioButton.ForeColor = TextColor;
-        radioButton.Font = new Font("メイリオ", 9F, FontStyle.Regular);
-        radioButton.BackColor = Color.Transparent;
-    }
-
-    /// <summary>
-    /// コンボボックスにモダンスタイルを適用
-    /// </summary>
-    public static void ApplyToComboBox(ComboBox comboBox)
-    {
-        comboBox.BackColor = Color.White;
-        comboBox.ForeColor = TextColor;
-        comboBox.Font = new Font("メイリオ", 9F, FontStyle.Regular);
-        comboBox.FlatStyle = FlatStyle.Flat;
-    }
+    #endregion
 }

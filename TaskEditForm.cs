@@ -1,747 +1,505 @@
 using Microsoft.Win32.TaskScheduler;
 using System.Text;
-using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace TaskCrony;
 
 /// <summary>
-/// タスク編集フォーム
+/// タスク編集フォーム（仕様書4.2.2準拠）
 /// </summary>
 public partial class TaskEditForm : Form
 {
+    #region フィールド
+
     private readonly string _taskName;
     private readonly string _batFolderPath;
     private FolderBrowserDialog? _folderBrowserDialog;
-    private Microsoft.Win32.TaskScheduler.Task? _existingTask;
-
+    private OpenFileDialog? _openFileDialog;
+    
     /// <summary>
-    /// 編集結果
+    /// タスクが更新されたかどうか
     /// </summary>
     public bool TaskUpdated { get; private set; } = false;
 
+    #endregion
+
+    #region コンストラクタ
+
     /// <summary>
-    /// コンストラクタ
+    /// タスク編集フォームのコンストラクタ
     /// </summary>
+    /// <param name="taskName">編集対象のタスク名</param>
+    /// <param name="batFolderPath">BATファイルフォルダのパス</param>
     public TaskEditForm(string taskName, string batFolderPath)
     {
-        InitializeComponent();
         _taskName = taskName;
         _batFolderPath = batFolderPath;
+        
+        InitializeComponent();
         
         // モダンテーマを適用
         ModernTheme.ApplyToForm(this);
         
         InitializeControls();
-        LoadTaskData();
+        LoadTaskSettings();
     }
+
+    #endregion
+
+    #region 初期化メソッド
 
     /// <summary>
     /// コントロールの初期化
     /// </summary>
     private void InitializeControls()
     {
-        // フォームタイトル
         this.Text = $"タスク編集 - {_taskName}";
         
-        // 間隔設定の初期化
-        comboBoxInterval.Items.Clear();
-        comboBoxInterval.Items.AddRange(new[] { "毎日", "毎週", "毎月" });
-        comboBoxInterval.SelectedIndex = 0;
+        // イベントハンドラーの設定
+        SetupEventHandlers();
         
-        // デフォルト値設定
+        // ダイアログの初期化
+        InitializeDialogs();
+        
+        // タスク名を設定（編集不可）
         textBoxTaskName.Text = _taskName;
-        textBoxDateOffset.Text = "0";
+        textBoxTaskName.ReadOnly = true;
+        textBoxTaskName.BackColor = Color.FromArgb(240, 240, 240);
         
-        // ラジオボタンのデフォルト設定
-        checkBoxPrefixDateAfter.Checked = true;
-        checkBoxSuffixDateBefore.Checked = true;
-        checkBoxFolderPrefixDateAfter.Checked = true;
-        checkBoxFolderSuffixDateBefore.Checked = true;
-        
-        // イベントハンドラーを登録
-        RegisterEventHandlers();
-        
-        // 初期状態でのコントロールの有効/無効設定
+        // 初期状態でのコントロール有効/無効状態を設定
         UpdateControlsEnabledState();
-        
-        // 初期プレビュー更新
-        UpdatePreview();
     }
 
     /// <summary>
-    /// イベントハンドラーの登録
+    /// イベントハンドラーの設定
     /// </summary>
-    private void RegisterEventHandlers()
+    private void SetupEventHandlers()
     {
-        // テキストボックスの変更イベント
-        textBoxFileName.TextChanged += (s, e) => UpdatePreview();
-        textBoxPrefix.TextChanged += (s, e) => UpdatePreview();
-        textBoxSuffix.TextChanged += (s, e) => UpdatePreview();
-        textBoxFolderBaseName.TextChanged += (s, e) => UpdatePreview();
-        textBoxFolderPrefix.TextChanged += (s, e) => UpdatePreview();
-        textBoxFolderSuffix.TextChanged += (s, e) => UpdatePreview();
-        textBoxDateOffset.TextChanged += (s, e) => UpdatePreview();
+        // ボタンイベント
+        buttonBrowseSource.Click += ButtonBrowseSource_Click;
+        buttonBrowseDestination.Click += ButtonBrowseDestination_Click;
+        buttonSaveTask.Click += ButtonSaveTask_Click;
+        buttonCancel.Click += ButtonCancel_Click;
         
-        // リプレース機能のイベントハンドラー
-        if (textBoxReplaceFrom != null && textBoxReplaceTo != null)
-        {
-            textBoxReplaceFrom.TextChanged += (s, e) => UpdatePreview();
-            textBoxReplaceTo.TextChanged += (s, e) => UpdatePreview();
-        }
+        // チェックボックスイベント
+        checkBoxCreateFile.CheckedChanged += CheckBoxCreateFile_CheckedChanged;
+        checkBoxCreateFolder.CheckedChanged += CheckBoxCreateFolder_CheckedChanged;
         
-        // ラジオボタンの変更イベント
-        checkBoxPrefixDateBefore.CheckedChanged += (s, e) => UpdatePreview();
-        checkBoxPrefixDateAfter.CheckedChanged += (s, e) => UpdatePreview();
-        checkBoxSuffixDateBefore.CheckedChanged += (s, e) => UpdatePreview();
-        checkBoxSuffixDateAfter.CheckedChanged += (s, e) => UpdatePreview();
-        checkBoxFolderPrefixDateBefore.CheckedChanged += (s, e) => UpdatePreview();
-        checkBoxFolderPrefixDateAfter.CheckedChanged += (s, e) => UpdatePreview();
-        checkBoxFolderSuffixDateBefore.CheckedChanged += (s, e) => UpdatePreview();
-        checkBoxFolderSuffixDateAfter.CheckedChanged += (s, e) => UpdatePreview();
+        // プレビュー関連イベント
+        SetupPreviewEvents();
     }
 
     /// <summary>
-    /// タスクデータの読み込み
+    /// プレビュー関連イベントハンドラーの設定
     /// </summary>
-    private void LoadTaskData()
+    private void SetupPreviewEvents()
+    {
+        // ファイル設定
+        radioPrefixDateBefore.CheckedChanged += UpdateFileNamePreview;
+        radioPrefixDateAfter.CheckedChanged += UpdateFileNamePreview;
+        radioPrefixDateNone.CheckedChanged += UpdateFileNamePreview;
+        radioSuffixDateBefore.CheckedChanged += UpdateFileNamePreview;
+        radioSuffixDateAfter.CheckedChanged += UpdateFileNamePreview;
+        radioSuffixDateNone.CheckedChanged += UpdateFileNamePreview;
+        textBoxPrefix.TextChanged += UpdateFileNamePreview;
+        textBoxSuffix.TextChanged += UpdateFileNamePreview;
+        textBoxReplaceFrom.TextChanged += UpdateFileNamePreview;
+        textBoxReplaceTo.TextChanged += UpdateFileNamePreview;
+        
+        // フォルダ設定
+        radioFolderPrefixDateBefore.CheckedChanged += UpdateFileNamePreview;
+        radioFolderPrefixDateAfter.CheckedChanged += UpdateFileNamePreview;
+        radioFolderPrefixDateNone.CheckedChanged += UpdateFileNamePreview;
+        radioFolderSuffixDateBefore.CheckedChanged += UpdateFileNamePreview;
+        radioFolderSuffixDateAfter.CheckedChanged += UpdateFileNamePreview;
+        radioFolderSuffixDateNone.CheckedChanged += UpdateFileNamePreview;
+        textBoxFolderPrefix.TextChanged += UpdateFileNamePreview;
+        textBoxFolderSuffix.TextChanged += UpdateFileNamePreview;
+        textBoxFolderBaseName.TextChanged += UpdateFileNamePreview;
+        
+        // 共通設定
+        numericUpDownDateOffset.ValueChanged += UpdateFileNamePreview;
+        textBoxSourcePath.TextChanged += UpdateFileNamePreview;
+    }
+
+    /// <summary>
+    /// ダイアログの初期化
+    /// </summary>
+    private void InitializeDialogs()
+    {
+        // ファイル選択ダイアログ
+        _openFileDialog = new OpenFileDialog
+        {
+            Title = "コピー元ファイルを選択",
+            Filter = "すべてのファイル (*.*)|*.*",
+            Multiselect = true
+        };
+        
+        // フォルダ選択ダイアログ
+        _folderBrowserDialog = new FolderBrowserDialog
+        {
+            Description = "コピー先フォルダを選択"
+        };
+    }
+
+    #endregion
+
+    #region タスク設定読み込み
+
+    /// <summary>
+    /// 既存タスクの設定を読み込み（仕様書4.2.2準拠）
+    /// </summary>
+    private void LoadTaskSettings()
     {
         try
         {
+            // Windowsタスクスケジューラーからタスク情報を取得
             using var taskService = new TaskService();
-            _existingTask = taskService.GetTask(_taskName);
+            var task = taskService.GetTask(_taskName);
             
-            if (_existingTask != null)
+            if (task == null)
             {
-                // タスク有効状態
-                checkBoxEnableTask.Checked = _existingTask.Enabled;
-                
-                // トリガー情報の取得
-                var trigger = _existingTask.Definition.Triggers.FirstOrDefault();
-                if (trigger is DailyTrigger dailyTrigger)
-                {
-                    comboBoxInterval.SelectedIndex = 0; // 毎日
-                    textBoxTime.Text = dailyTrigger.StartBoundary.ToString("HH:mm");
-                }
-                else if (trigger is WeeklyTrigger weeklyTrigger)
-                {
-                    comboBoxInterval.SelectedIndex = 1; // 毎週
-                    textBoxTime.Text = weeklyTrigger.StartBoundary.ToString("HH:mm");
-                }
-                else if (trigger is MonthlyTrigger monthlyTrigger)
-                {
-                    comboBoxInterval.SelectedIndex = 2; // 毎月
-                    textBoxTime.Text = monthlyTrigger.StartBoundary.ToString("HH:mm");
-                }
-
-                // アクション情報の取得（BATファイルから設定を解析）
-                LoadSettingsFromBatFile();
+                MessageBox.Show($"タスク '{_taskName}' が見つかりません。", "エラー", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
             }
+
+            // スケジュール設定を読み込み
+            LoadScheduleSettings(task);
+            
+            // BATファイルの内容を解析して設定を復元
+            LoadBatFileSettings(task);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"タスクデータの読み込み中にエラーが発生しました: {ex.Message}", 
-                "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show($"タスク設定の読み込みに失敗しました:\n{ex.Message}", "エラー", 
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 
     /// <summary>
-    /// BATファイルから設定を読み込み
+    /// スケジュール設定を読み込み
     /// </summary>
-    private void LoadSettingsFromBatFile()
+    private void LoadScheduleSettings(Microsoft.Win32.TaskScheduler.Task task)
+    {
+        if (task.Definition.Triggers.Count > 0)
+        {
+            var trigger = task.Definition.Triggers[0];
+            dateTimePickerStart.Value = trigger.StartBoundary;
+            
+            // トリガータイプに基づいてスケジュール種別を設定
+            switch (trigger)
+            {
+                case TimeTrigger:
+                    comboBoxScheduleType.SelectedIndex = 0; // 今すぐ実行
+                    break;
+                case DailyTrigger:
+                    comboBoxScheduleType.SelectedIndex = 1; // 毎日
+                    break;
+                case WeeklyTrigger:
+                    comboBoxScheduleType.SelectedIndex = 2; // 毎週
+                    break;
+                case MonthlyTrigger:
+                    comboBoxScheduleType.SelectedIndex = 3; // 毎月
+                    break;
+                default:
+                    comboBoxScheduleType.SelectedIndex = 0;
+                    break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// BATファイル内容を解析して設定を復元（仕様書4.2.2の複雑なファイル名パターン対応）
+    /// </summary>
+    private void LoadBatFileSettings(Microsoft.Win32.TaskScheduler.Task task)
     {
         try
         {
-            // まず最新のBATファイルを探す（タスク名_日時の形式）
-            var batFiles = Directory.GetFiles(_batFolderPath, $"{_taskName}_*.bat");
-            if (batFiles.Length == 0)
+            // タスクのアクションからBATファイルパスを取得
+            if (task.Definition.Actions.Count > 0 && task.Definition.Actions[0] is ExecAction execAction)
             {
-                // 古い形式のBATファイルも確認
-                var oldBatFilePath = Path.Combine(_batFolderPath, $"{_taskName}.bat");
-                if (File.Exists(oldBatFilePath))
+                var batFilePath = ExtractBatFilePathFromCommand(execAction.Arguments);
+                if (!string.IsNullOrEmpty(batFilePath) && File.Exists(batFilePath))
                 {
-                    batFiles = new[] { oldBatFilePath };
+                    var batContent = File.ReadAllText(batFilePath, Encoding.UTF8);
+                    ParseBatFileContent(batContent);
                 }
-            }
-
-            if (batFiles.Length > 0)
-            {
-                // 最新のファイルを選択
-                var latestBatFile = batFiles.OrderByDescending(f => File.GetCreationTime(f)).First();
-                var content = File.ReadAllText(latestBatFile, Encoding.UTF8);
-                
-                // 設定値の解析
-                ParseBatFileContent(content);
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"BATファイルの読み込み中にエラーが発生しました: {ex.Message}", 
-                "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show($"BATファイルの解析に失敗しました:\n{ex.Message}", "警告", 
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
     }
 
     /// <summary>
-    /// BATファイルの内容を解析
+    /// コマンドからBATファイルパスを抽出
     /// </summary>
-    private void ParseBatFileContent(string content)
+    private string ExtractBatFilePathFromCommand(string arguments)
     {
-        var lines = content.Split('\n');
+        // "/c "BATファイルパス"" の形式から BATファイルパス を抽出
+        var match = Regex.Match(arguments, @"/c\s+""([^""]+)""");
+        return match.Success ? match.Groups[1].Value : string.Empty;
+    }
+
+    /// <summary>
+    /// BATファイルの内容を解析して設定を復元
+    /// </summary>
+    private void ParseBatFileContent(string batContent)
+    {
+        var lines = batContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        
+        // 日付オフセットの解析
+        ParseDateOffset(lines);
+        
+        // フォルダ作成設定の解析
+        ParseFolderSettings(lines);
+        
+        // ファイルコピー設定の解析
+        ParseFileSettings(lines);
+        
+        // 初回プレビュー更新
+        UpdateFileNamePreview(null, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// 日付オフセットを解析
+    /// </summary>
+    private void ParseDateOffset(string[] lines)
+    {
+        foreach (var line in lines)
+        {
+            var match = Regex.Match(line, @"AddDays\((-?\d+)\)");
+            if (match.Success)
+            {
+                if (int.TryParse(match.Groups[1].Value, out var offset))
+                {
+                    numericUpDownDateOffset.Value = offset;
+                }
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// フォルダ作成設定を解析
+    /// </summary>
+    private void ParseFolderSettings(string[] lines)
+    {
+        bool hasFolderCreation = lines.Any(line => line.Contains("mkdir") || line.Contains("フォルダ作成"));
+        checkBoxCreateFolder.Checked = hasFolderCreation;
+
+        if (hasFolderCreation)
+        {
+            // フォルダ名構築の呼び出しを解析
+            ParseFolderNameBuilding(lines);
+            
+            // コピー先パスを解析
+            ParseDestinationPath(lines);
+        }
+    }
+
+    /// <summary>
+    /// フォルダ名構築設定を解析
+    /// </summary>
+    private void ParseFolderNameBuilding(string[] lines)
+    {
+        foreach (var line in lines)
+        {
+            var match = Regex.Match(line, @"call\s+:build_filename\s+""([^""]*)""\s+""([^""]*)""\s+""([^""]*)""\s+""([^""]*)""\s+""([^""]*)""");
+            if (match.Success)
+            {
+                textBoxFolderBaseName.Text = match.Groups[1].Value;
+                textBoxFolderPrefix.Text = match.Groups[2].Value;
+                textBoxFolderSuffix.Text = match.Groups[3].Value;
+                
+                var prefixDatePos = match.Groups[4].Value;
+                var suffixDatePos = match.Groups[5].Value;
+                
+                SetDatePosition(prefixDatePos, 
+                    radioFolderPrefixDateBefore, radioFolderPrefixDateAfter, radioFolderPrefixDateNone);
+                SetDatePosition(suffixDatePos, 
+                    radioFolderSuffixDateBefore, radioFolderSuffixDateAfter, radioFolderSuffixDateNone);
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// ファイル設定を解析
+    /// </summary>
+    private void ParseFileSettings(string[] lines)
+    {
+        bool hasFileCopy = lines.Any(line => line.Contains("copy") && !line.Contains("echo"));
+        checkBoxCreateFile.Checked = hasFileCopy;
+
+        if (hasFileCopy)
+        {
+            // ファイル名構築の呼び出しを解析
+            ParseFileNameBuilding(lines);
+            
+            // コピー元ファイルを解析
+            ParseSourceFiles(lines);
+        }
+    }
+
+    /// <summary>
+    /// ファイル名構築設定を解析
+    /// </summary>
+    private void ParseFileNameBuilding(string[] lines)
+    {
+        // フォルダ作成の後にあるファイル名構築を探す
+        bool foundFileNameBuilding = false;
         
         foreach (var line in lines)
         {
-            var trimmedLine = line.Trim();
-            
-            // copyコマンドの行からソースファイルを抽出
-            if (trimmedLine.StartsWith("copy \"") && trimmedLine.Contains("\""))
+            if (line.Contains("ファイルコピー") || (foundFileNameBuilding && line.Contains("call :build_filename")))
             {
-                var startIndex = trimmedLine.IndexOf("\"") + 1;
-                var endIndex = trimmedLine.IndexOf("\"", startIndex);
-                if (endIndex > startIndex)
+                var match = Regex.Match(line, @"call\s+:build_filename\s+""([^""]*)""\s+""([^""]*)""\s+""([^""]*)""\s+""([^""]*)""\s+""([^""]*)""");
+                if (match.Success)
                 {
-                    var sourceFile = trimmedLine.Substring(startIndex, endIndex - startIndex);
-                    textBoxSourceFolder.Text = Path.GetDirectoryName(sourceFile) ?? "";
-                    textBoxFileName.Text = Path.GetFileNameWithoutExtension(sourceFile);
-                    checkBoxCopyFiles.Checked = true;
+                    // ベースファイル名は実際のファイルから取得するので、ここでは接頭語・接尾語のみ設定
+                    textBoxPrefix.Text = match.Groups[2].Value;
+                    textBoxSuffix.Text = match.Groups[3].Value;
+                    
+                    var prefixDatePos = match.Groups[4].Value;
+                    var suffixDatePos = match.Groups[5].Value;
+                    
+                    SetDatePosition(prefixDatePos, 
+                        radioPrefixDateBefore, radioPrefixDateAfter, radioPrefixDateNone);
+                    SetDatePosition(suffixDatePos, 
+                        radioSuffixDateBefore, radioSuffixDateAfter, radioSuffixDateNone);
+                    break;
                 }
             }
             
-            // mkdirコマンドの行からコピー先フォルダを抽出
-            if (trimmedLine.StartsWith("mkdir ") || trimmedLine.Contains("mkdir "))
+            if (line.Contains("mkdir"))
             {
-                checkBoxCreateFolder.Checked = true;
+                foundFileNameBuilding = true;
             }
-            
-            // call :build_filenameの行から設定を抽出
-            if (trimmedLine.StartsWith("call :build_filename"))
-            {
-                var parts = trimmedLine.Split('"').Where(p => !string.IsNullOrWhiteSpace(p) && p != " ").ToArray();
-                if (parts.Length >= 6)
-                {
-                    // ファイル用の設定
-                    if (parts[1] != "Folder") // フォルダ名でない場合
-                    {
-                        if (parts.Length > 2) textBoxPrefix.Text = parts[2];
-                        if (parts.Length > 3) textBoxSuffix.Text = parts[3];
-                        if (parts.Length > 4) SetDatePosition(parts[4], true); // prefix
-                        if (parts.Length > 5) SetDatePosition(parts[5], false); // suffix
-                    }
-                    else
-                    {
-                        // フォルダ用の設定
-                        if (parts.Length > 2) textBoxFolderPrefix.Text = parts[2];
-                        if (parts.Length > 3) textBoxFolderSuffix.Text = parts[3];
-                        if (parts.Length > 4) SetFolderDatePosition(parts[4], true); // prefix
-                        if (parts.Length > 5) SetFolderDatePosition(parts[5], false); // suffix
-                    }
-                }
-            }
-        }
-        
-        // 読み込み完了後にプレビューを更新
-        UpdatePreview();
-    }
-
-    /// <summary>
-    /// 日付位置設定を復元
-    /// </summary>
-    private void SetDatePosition(string position, bool isPrefix)
-    {
-        if (isPrefix)
-        {
-            checkBoxPrefixDateBefore.Checked = position == "before";
-            checkBoxPrefixDateAfter.Checked = position == "after";
-        }
-        else
-        {
-            checkBoxSuffixDateBefore.Checked = position == "before";
-            checkBoxSuffixDateAfter.Checked = position == "after";
         }
     }
 
     /// <summary>
-    /// フォルダ日付位置設定を復元
+    /// コピー元ファイルを解析
     /// </summary>
-    private void SetFolderDatePosition(string position, bool isPrefix)
+    private void ParseSourceFiles(string[] lines)
     {
-        if (isPrefix)
+        var sourceFiles = new List<string>();
+        
+        foreach (var line in lines)
         {
-            checkBoxFolderPrefixDateBefore.Checked = position == "before";
-            checkBoxFolderPrefixDateAfter.Checked = position == "after";
+            var match = Regex.Match(line, @"copy\s+""([^""]+)""\s+%");
+            if (match.Success)
+            {
+                sourceFiles.Add(match.Groups[1].Value);
+            }
         }
-        else
+
+        if (sourceFiles.Count > 0)
         {
-            checkBoxFolderSuffixDateBefore.Checked = position == "before";
-            checkBoxFolderSuffixDateAfter.Checked = position == "after";
+            textBoxSourcePath.Text = string.Join("; ", sourceFiles);
         }
     }
 
     /// <summary>
-    /// コントロールの有効/無効状態を更新
+    /// コピー先パスを解析
     /// </summary>
-    private void UpdateControlsEnabledState()
+    private void ParseDestinationPath(string[] lines)
     {
-        // ファイルコピー関連のコントロール
-        bool fileCopyEnabled = checkBoxCopyFiles.Checked;
-        textBoxFileName.Enabled = fileCopyEnabled;
-        textBoxPrefix.Enabled = fileCopyEnabled;
-        textBoxSuffix.Enabled = fileCopyEnabled;
-        groupBoxPrefixOptions.Enabled = fileCopyEnabled;
-        groupBoxSuffixOptions.Enabled = fileCopyEnabled;
-        
-        // フォルダ作成関連のコントロール
-        bool folderCreateEnabled = checkBoxCreateFolder.Checked;
-        textBoxFolderBaseName.Enabled = folderCreateEnabled;
-        textBoxFolderPrefix.Enabled = folderCreateEnabled;
-        textBoxFolderSuffix.Enabled = folderCreateEnabled;
-        groupBoxFolderPrefixOptions.Enabled = folderCreateEnabled;
-        groupBoxFolderSuffixOptions.Enabled = folderCreateEnabled;
+        foreach (var line in lines)
+        {
+            var match = Regex.Match(line, @"set\s+FOLDER_PATH=""([^""\\]+)\\");
+            if (match.Success)
+            {
+                textBoxDestinationPath.Text = match.Groups[1].Value;
+                break;
+            }
+        }
     }
 
     /// <summary>
-    /// プレビューを更新
+    /// 日付位置を設定
     /// </summary>
-    private void UpdatePreview()
+    private void SetDatePosition(string position, RadioButton beforeRadioButton, RadioButton afterRadioButton, RadioButton noneRadioButton)
     {
-        var previewText = new StringBuilder();
-        var sampleDate = DateTime.Now.AddDays(GetDateOffset());
-        var dateStr = sampleDate.ToString("yyyyMMdd");
-        
-        // フォルダ名のプレビュー
-        if (checkBoxCreateFolder.Checked && !string.IsNullOrWhiteSpace(textBoxFolderBaseName.Text))
-        {
-            var folderName = BuildFolderNameWithSettings(textBoxFolderBaseName.Text, dateStr);
-            previewText.AppendLine($"フォルダ名: {folderName}");
-        }
-        
-        // ファイル名のプレビュー
-        if (checkBoxCopyFiles.Checked && !string.IsNullOrWhiteSpace(textBoxFileName.Text))
-        {
-            var baseFileName = textBoxFileName.Text;
-            
-            // リプレース機能の適用
-            if (textBoxReplaceFrom != null && textBoxReplaceTo != null && 
-                !string.IsNullOrEmpty(textBoxReplaceFrom.Text))
-            {
-                baseFileName = baseFileName.Replace(textBoxReplaceFrom.Text, textBoxReplaceTo.Text ?? "");
-            }
-            
-            var fileName = BuildFileNameWithSettings(baseFileName, dateStr);
-            previewText.AppendLine($"ファイル名: {fileName}");
-        }
-        
-        if (previewText.Length == 0)
-        {
-            previewText.AppendLine("プレビューする項目がありません");
-        }
-        
-        textBoxPreview.Text = previewText.ToString().TrimEnd();
+        beforeRadioButton.Checked = position == "before";
+        afterRadioButton.Checked = position == "after";
+        noneRadioButton.Checked = position == "none" || string.IsNullOrEmpty(position);
     }
 
-    /// <summary>
-    /// 日付オフセットを取得
-    /// </summary>
-    private int GetDateOffset()
-    {
-        if (int.TryParse(textBoxDateOffset.Text, out int offset))
-        {
-            return offset;
-        }
-        return 0;
-    }
-
-    /// <summary>
-    /// フォルダ名設定を適用してフォルダ名を構築
-    /// </summary>
-    private string BuildFolderNameWithSettings(string baseName, string dateStr)
-    {
-        var result = baseName;
-        
-        // プレフィックス処理
-        if (!string.IsNullOrWhiteSpace(textBoxFolderPrefix.Text))
-        {
-            if (checkBoxFolderPrefixDateBefore.Checked)
-            {
-                result = dateStr + textBoxFolderPrefix.Text + result;
-            }
-            else
-            {
-                result = textBoxFolderPrefix.Text + dateStr + result;
-            }
-        }
-        
-        // サフィックス処理
-        if (!string.IsNullOrWhiteSpace(textBoxFolderSuffix.Text))
-        {
-            if (checkBoxFolderSuffixDateBefore.Checked)
-            {
-                result = result + dateStr + textBoxFolderSuffix.Text;
-            }
-            else
-            {
-                result = result + textBoxFolderSuffix.Text + dateStr;
-            }
-        }
-        
-        return result;
-    }
-
-    /// <summary>
-    /// ファイル名設定を適用してファイル名を構築
-    /// </summary>
-    private string BuildFileNameWithSettings(string baseName, string dateStr)
-    {
-        var result = baseName;
-        
-        // プレフィックス処理
-        if (!string.IsNullOrWhiteSpace(textBoxPrefix.Text))
-        {
-            if (checkBoxPrefixDateBefore.Checked)
-            {
-                result = dateStr + textBoxPrefix.Text + result;
-            }
-            else
-            {
-                result = textBoxPrefix.Text + dateStr + result;
-            }
-        }
-        
-        // サフィックス処理
-        if (!string.IsNullOrWhiteSpace(textBoxSuffix.Text))
-        {
-            if (checkBoxSuffixDateBefore.Checked)
-            {
-                result = result + dateStr + textBoxSuffix.Text;
-            }
-            else
-            {
-                result = result + textBoxSuffix.Text + dateStr;
-            }
-        }
-        
-        return result;
-    }
-
-    /// <summary>
-    /// 新しいBATファイル内容を生成
-    /// </summary>
-    private string GenerateBatContent()
-    {
-        var batContent = new StringBuilder();
-        
-        // UTF-8 BOM付きの設定
-        batContent.AppendLine("@echo off");
-        batContent.AppendLine("chcp 65001 > nul");
-        batContent.AppendLine();
-        
-        // 設定値をコメントとして保存
-        batContent.AppendLine($"REM SourceFolder:{textBoxSourceFolder.Text}");
-        batContent.AppendLine($"REM DestinationFolder:{textBoxDestinationFolder.Text}");
-        batContent.AppendLine($"REM FileName:{textBoxFileName.Text}");
-        batContent.AppendLine($"REM Prefix:{textBoxPrefix.Text}");
-        batContent.AppendLine($"REM Suffix:{textBoxSuffix.Text}");
-        batContent.AppendLine($"REM FolderBaseName:{textBoxFolderBaseName.Text}");
-        batContent.AppendLine($"REM FolderPrefix:{textBoxFolderPrefix.Text}");
-        batContent.AppendLine($"REM FolderSuffix:{textBoxFolderSuffix.Text}");
-        batContent.AppendLine($"REM DateOffset:{textBoxDateOffset.Text}");
-        batContent.AppendLine($"REM CopyFiles:{checkBoxCopyFiles.Checked}");
-        batContent.AppendLine($"REM CreateFolder:{checkBoxCreateFolder.Checked}");
-        batContent.AppendLine();
-        
-        // PowerShellコマンドで日付計算
-        var dateOffset = GetDateOffset();
-        batContent.AppendLine($"for /f %%i in ('powershell -Command \"(Get-Date).AddDays({dateOffset}).ToString('yyyyMMdd')\"') do set TARGET_DATE=%%i");
-        batContent.AppendLine();
-        
-        // ファイル名構築関数の定義
-        if (checkBoxCopyFiles.Checked && !string.IsNullOrWhiteSpace(textBoxFileName.Text))
-        {
-            batContent.AppendLine("REM ファイル名構築関数");
-            batContent.AppendLine("call :BuildFileName");
-            batContent.AppendLine();
-        }
-        
-        // フォルダ名構築関数の定義
-        if (checkBoxCreateFolder.Checked && !string.IsNullOrWhiteSpace(textBoxFolderBaseName.Text))
-        {
-            batContent.AppendLine("REM フォルダ名構築関数");
-            batContent.AppendLine("call :BuildFolderName");
-            batContent.AppendLine();
-        }
-        
-        // フォルダ作成処理
-        if (checkBoxCreateFolder.Checked && !string.IsNullOrWhiteSpace(textBoxFolderBaseName.Text))
-        {
-            batContent.AppendLine("REM フォルダ作成");
-            batContent.AppendLine($"if not exist \"{textBoxDestinationFolder.Text}\\%FOLDER_NAME%\" (");
-            batContent.AppendLine($"    mkdir \"{textBoxDestinationFolder.Text}\\%FOLDER_NAME%\"");
-            batContent.AppendLine("    echo フォルダを作成しました: %FOLDER_NAME%");
-            batContent.AppendLine(")");
-            batContent.AppendLine();
-        }
-        
-        // ファイルコピー処理
-        if (checkBoxCopyFiles.Checked)
-        {
-            var destinationPath = checkBoxCreateFolder.Checked && !string.IsNullOrWhiteSpace(textBoxFolderBaseName.Text)
-                ? $"{textBoxDestinationFolder.Text}\\%FOLDER_NAME%"
-                : textBoxDestinationFolder.Text;
-                
-            batContent.AppendLine("REM ファイルコピー");
-            batContent.AppendLine($"if exist \"{textBoxSourceFolder.Text}\" (");
-            batContent.AppendLine($"    for %%f in (\"{textBoxSourceFolder.Text}\\*\") do (");
-            batContent.AppendLine($"        copy \"%%f\" \"{destinationPath}\\%FILE_NAME%\"");
-            batContent.AppendLine("        echo ファイルをコピーしました: %%~nxf -> %FILE_NAME%");
-            batContent.AppendLine("    )");
-            batContent.AppendLine(") else (");
-            batContent.AppendLine("    echo エラー: コピー元フォルダが見つかりません");
-            batContent.AppendLine(")");
-            batContent.AppendLine();
-        }
-        
-        batContent.AppendLine("goto :EOF");
-        batContent.AppendLine();
-        
-        // ファイル名構築関数
-        if (checkBoxCopyFiles.Checked && !string.IsNullOrWhiteSpace(textBoxFileName.Text))
-        {
-            batContent.AppendLine(":BuildFileName");
-            batContent.AppendLine($"set FILE_NAME={textBoxFileName.Text}");
-            
-            // プレフィックス処理
-            if (!string.IsNullOrWhiteSpace(textBoxPrefix.Text))
-            {
-                if (checkBoxPrefixDateBefore.Checked)
-                {
-                    batContent.AppendLine($"set FILE_NAME=%TARGET_DATE%{textBoxPrefix.Text}%FILE_NAME%");
-                }
-                else
-                {
-                    batContent.AppendLine($"set FILE_NAME={textBoxPrefix.Text}%TARGET_DATE%%FILE_NAME%");
-                }
-            }
-            
-            // サフィックス処理
-            if (!string.IsNullOrWhiteSpace(textBoxSuffix.Text))
-            {
-                if (checkBoxSuffixDateBefore.Checked)
-                {
-                    batContent.AppendLine($"set FILE_NAME=%FILE_NAME%%TARGET_DATE%{textBoxSuffix.Text}");
-                }
-                else
-                {
-                    batContent.AppendLine($"set FILE_NAME=%FILE_NAME%{textBoxSuffix.Text}%TARGET_DATE%");
-                }
-            }
-            
-            batContent.AppendLine("goto :EOF");
-            batContent.AppendLine();
-        }
-        
-        // フォルダ名構築関数
-        if (checkBoxCreateFolder.Checked && !string.IsNullOrWhiteSpace(textBoxFolderBaseName.Text))
-        {
-            batContent.AppendLine(":BuildFolderName");
-            batContent.AppendLine($"set FOLDER_NAME={textBoxFolderBaseName.Text}");
-            
-            // プレフィックス処理
-            if (!string.IsNullOrWhiteSpace(textBoxFolderPrefix.Text))
-            {
-                if (checkBoxFolderPrefixDateBefore.Checked)
-                {
-                    batContent.AppendLine($"set FOLDER_NAME=%TARGET_DATE%{textBoxFolderPrefix.Text}%FOLDER_NAME%");
-                }
-                else
-                {
-                    batContent.AppendLine($"set FOLDER_NAME={textBoxFolderPrefix.Text}%TARGET_DATE%%FOLDER_NAME%");
-                }
-            }
-            
-            // サフィックス処理
-            if (!string.IsNullOrWhiteSpace(textBoxFolderSuffix.Text))
-            {
-                if (checkBoxFolderSuffixDateBefore.Checked)
-                {
-                    batContent.AppendLine($"set FOLDER_NAME=%FOLDER_NAME%%TARGET_DATE%{textBoxFolderSuffix.Text}");
-                }
-                else
-                {
-                    batContent.AppendLine($"set FOLDER_NAME=%FOLDER_NAME%{textBoxFolderSuffix.Text}%TARGET_DATE%");
-                }
-            }
-            
-            batContent.AppendLine("goto :EOF");
-            batContent.AppendLine();
-        }
-        
-        return batContent.ToString();
-    }
+    #endregion
 
     #region イベントハンドラー
 
-    private void buttonSourceFolderBrowse_Click(object sender, EventArgs e)
+    /// <summary>
+    /// ファイル作成チェックボックスの状態変更イベント
+    /// </summary>
+    private void CheckBoxCreateFile_CheckedChanged(object? sender, EventArgs e)
     {
-        _folderBrowserDialog ??= new FolderBrowserDialog();
-        
-        if (_folderBrowserDialog.ShowDialog() == DialogResult.OK)
+        UpdateControlsEnabledState();
+        UpdateFileNamePreview(sender, e);
+    }
+
+    /// <summary>
+    /// フォルダ作成チェックボックスの状態変更イベント
+    /// </summary>
+    private void CheckBoxCreateFolder_CheckedChanged(object? sender, EventArgs e)
+    {
+        UpdateControlsEnabledState();
+        UpdateFileNamePreview(sender, e);
+    }
+
+    /// <summary>
+    /// コピー元ファイル参照ボタンクリックイベント
+    /// </summary>
+    private void ButtonBrowseSource_Click(object? sender, EventArgs e)
+    {
+        if (_openFileDialog?.ShowDialog() == DialogResult.OK)
         {
-            textBoxSourceFolder.Text = _folderBrowserDialog.SelectedPath;
+            textBoxSourcePath.Text = string.Join("; ", _openFileDialog.FileNames);
         }
     }
 
-    private void buttonDestinationFolderBrowse_Click(object sender, EventArgs e)
+    /// <summary>
+    /// コピー先フォルダ参照ボタンクリックイベント
+    /// </summary>
+    private void ButtonBrowseDestination_Click(object? sender, EventArgs e)
     {
-        _folderBrowserDialog ??= new FolderBrowserDialog();
-        
-        if (_folderBrowserDialog.ShowDialog() == DialogResult.OK)
+        if (_folderBrowserDialog?.ShowDialog() == DialogResult.OK)
         {
-            textBoxDestinationFolder.Text = _folderBrowserDialog.SelectedPath;
+            textBoxDestinationPath.Text = _folderBrowserDialog.SelectedPath;
         }
     }
 
-    private void checkBoxCopyFiles_CheckedChanged(object sender, EventArgs e)
-    {
-        UpdateControlsEnabledState();
-        UpdatePreview();
-    }
-
-    private void checkBoxCreateFolder_CheckedChanged(object sender, EventArgs e)
-    {
-        UpdateControlsEnabledState();
-        UpdatePreview();
-    }
-
-    private void textBoxFileName_TextChanged(object sender, EventArgs e)
-    {
-        UpdatePreview();
-    }
-
-    private void textBoxPrefix_TextChanged(object sender, EventArgs e)
-    {
-        UpdatePreview();
-    }
-
-    private void textBoxSuffix_TextChanged(object sender, EventArgs e)
-    {
-        UpdatePreview();
-    }
-
-    private void textBoxFolderBaseName_TextChanged(object sender, EventArgs e)
-    {
-        UpdatePreview();
-    }
-
-    private void textBoxFolderPrefix_TextChanged(object sender, EventArgs e)
-    {
-        UpdatePreview();
-    }
-
-    private void textBoxFolderSuffix_TextChanged(object sender, EventArgs e)
-    {
-        UpdatePreview();
-    }
-
-    private void textBoxDateOffset_TextChanged(object sender, EventArgs e)
-    {
-        UpdatePreview();
-    }
-
-    private void checkBoxPrefixDateBefore_CheckedChanged(object sender, EventArgs e)
-    {
-        UpdatePreview();
-    }
-
-    private void checkBoxPrefixDateAfter_CheckedChanged(object sender, EventArgs e)
-    {
-        UpdatePreview();
-    }
-
-    private void checkBoxSuffixDateBefore_CheckedChanged(object sender, EventArgs e)
-    {
-        UpdatePreview();
-    }
-
-    private void checkBoxSuffixDateAfter_CheckedChanged(object sender, EventArgs e)
-    {
-        UpdatePreview();
-    }
-
-    private void checkBoxFolderPrefixDateBefore_CheckedChanged(object sender, EventArgs e)
-    {
-        UpdatePreview();
-    }
-
-    private void checkBoxFolderPrefixDateAfter_CheckedChanged(object sender, EventArgs e)
-    {
-        UpdatePreview();
-    }
-
-    private void checkBoxFolderSuffixDateBefore_CheckedChanged(object sender, EventArgs e)
-    {
-        UpdatePreview();
-    }
-
-    private void checkBoxFolderSuffixDateAfter_CheckedChanged(object sender, EventArgs e)
-    {
-        UpdatePreview();
-    }
-
-    private void button1_Click(object sender, EventArgs e)
-    {
-        UpdatePreview();
-    }
-
-    private void buttonOK_Click(object sender, EventArgs e)
+    /// <summary>
+    /// 保存ボタンクリックイベント
+    /// </summary>
+    private async void ButtonSaveTask_Click(object? sender, EventArgs e)
     {
         try
         {
-            // 入力検証
-            if (string.IsNullOrWhiteSpace(textBoxTaskName.Text))
+            if (ValidateInput())
             {
-                MessageBox.Show("タスク名を入力してください。", "入力エラー", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
+                await SaveTaskChangesAsync();
+                TaskUpdated = true;
+                this.DialogResult = DialogResult.OK;
+                this.Close();
             }
-
-            if (!checkBoxCopyFiles.Checked && !checkBoxCreateFolder.Checked)
-            {
-                MessageBox.Show("ファイルコピーまたはフォルダ作成のいずれかを選択してください。", "入力エラー", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (checkBoxCopyFiles.Checked && (string.IsNullOrWhiteSpace(textBoxSourceFolder.Text) || string.IsNullOrWhiteSpace(textBoxDestinationFolder.Text)))
-            {
-                MessageBox.Show("コピー元とコピー先フォルダを指定してください。", "入力エラー", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (checkBoxCreateFolder.Checked && string.IsNullOrWhiteSpace(textBoxDestinationFolder.Text))
-            {
-                MessageBox.Show("作成先フォルダを指定してください。", "入力エラー", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (!DateTime.TryParseExact(textBoxTime.Text, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
-            {
-                MessageBox.Show("実行時間を HH:mm 形式で入力してください。", "入力エラー", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            // BATファイルの更新
-            UpdateBatFile();
-            
-            // タスクの更新
-            UpdateTask();
-            
-            TaskUpdated = true;
-            this.DialogResult = DialogResult.OK;
-            this.Close();
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"タスクの更新中にエラーが発生しました: {ex.Message}", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show($"タスクの保存に失敗しました:\n{ex.Message}", "エラー", 
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 
-    private void buttonCancel_Click(object sender, EventArgs e)
+    /// <summary>
+    /// キャンセルボタンクリックイベント
+    /// </summary>
+    private void ButtonCancel_Click(object? sender, EventArgs e)
     {
         this.DialogResult = DialogResult.Cancel;
         this.Close();
@@ -749,61 +507,611 @@ public partial class TaskEditForm : Form
 
     #endregion
 
+    #region ユーティリティメソッド
+
     /// <summary>
-    /// BATファイルを更新
+    /// 入力値のバリデーション
     /// </summary>
-    private void UpdateBatFile()
+    private bool ValidateInput()
     {
-        var batFilePath = Path.Combine(_batFolderPath, $"{_taskName}.bat");
-        var batContent = GenerateBatContent();
-        
-        File.WriteAllText(batFilePath, batContent, new UTF8Encoding(true));
+        // 作成オプションの検証
+        if (!checkBoxCreateFolder.Checked && !checkBoxCreateFile.Checked)
+        {
+            MessageBox.Show("フォルダ作成またはファイルコピーのいずれかを選択してください。", "入力エラー", 
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return false;
+        }
+
+        // コピー先フォルダの検証
+        if (checkBoxCreateFolder.Checked || checkBoxCreateFile.Checked)
+        {
+            if (string.IsNullOrWhiteSpace(textBoxDestinationPath.Text) || 
+                !Directory.Exists(textBoxDestinationPath.Text))
+            {
+                MessageBox.Show("有効なコピー先フォルダを指定してください。", "入力エラー", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+        }
+
+        // コピー元ファイルの検証
+        if (checkBoxCreateFile.Checked)
+        {
+            if (string.IsNullOrWhiteSpace(textBoxSourcePath.Text))
+            {
+                MessageBox.Show("コピー元ファイルを指定してください。", "入力エラー", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            var sourceFiles = textBoxSourcePath.Text.Split(';')
+                .Select(f => f.Trim())
+                .Where(f => !string.IsNullOrEmpty(f))
+                .ToArray();
+
+            foreach (var file in sourceFiles)
+            {
+                if (!File.Exists(file))
+                {
+                    MessageBox.Show($"ファイルが存在しません: {file}", "入力エラー", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /// <summary>
-    /// タスクを更新
+    /// コントロールの有効/無効状態を更新
     /// </summary>
-    private void UpdateTask()
+    private void UpdateControlsEnabledState()
     {
-        if (_existingTask == null) return;
+        bool fileEnabled = checkBoxCreateFile.Checked;
+        bool folderEnabled = checkBoxCreateFolder.Checked;
+        bool commonEnabled = fileEnabled || folderEnabled;
 
-        using var taskService = new TaskService();
-        var taskDefinition = _existingTask.Definition;
+        // ファイル関連コントロールの制御
+        textBoxSourcePath.Enabled = fileEnabled;
+        buttonBrowseSource.Enabled = fileEnabled;
+        labelSourcePath.Enabled = fileEnabled;
         
-        // トリガーの更新
-        taskDefinition.Triggers.Clear();
+        // ファイル名設定コントロール
+        textBoxPrefix.Enabled = fileEnabled;
+        labelPrefix.Enabled = fileEnabled;
+        textBoxSuffix.Enabled = fileEnabled;
+        labelSuffix.Enabled = fileEnabled;
+        groupBoxPrefixOptions.Enabled = fileEnabled;
+        groupBoxSuffixOptions.Enabled = fileEnabled;
+        groupBoxFileReplace.Enabled = fileEnabled;
         
-        var time = DateTime.ParseExact(textBoxTime.Text, "HH:mm", CultureInfo.InvariantCulture);
-        var startTime = DateTime.Today.Add(time.TimeOfDay);
+        // フォルダ名設定コントロール
+        textBoxFolderBaseName.Enabled = folderEnabled;
+        labelFolderBaseName.Enabled = folderEnabled;
+        textBoxFolderPrefix.Enabled = folderEnabled;
+        labelFolderPrefix.Enabled = folderEnabled;
+        textBoxFolderSuffix.Enabled = folderEnabled;
+        labelFolderSuffix.Enabled = folderEnabled;
+        groupBoxFolderPrefixOptions.Enabled = folderEnabled;
+        groupBoxFolderSuffixOptions.Enabled = folderEnabled;
         
-        if (startTime <= DateTime.Now)
+        // 共通設定
+        textBoxDestinationPath.Enabled = commonEnabled;
+        buttonBrowseDestination.Enabled = commonEnabled;
+        labelDestinationPath.Enabled = commonEnabled;
+        numericUpDownDateOffset.Enabled = commonEnabled;
+        labelDateOffset.Enabled = commonEnabled;
+        textBoxPreview.Enabled = commonEnabled;
+        labelPreview.Enabled = commonEnabled;
+    }
+
+    /// <summary>
+    /// ファイル名・フォルダ名を構築
+    /// </summary>
+    private string BuildFileNameWithSettings(string baseName, string dateString, string prefix, string suffix, 
+        bool prefixDateBefore, bool prefixDateAfter, bool prefixDateNone, 
+        bool suffixDateBefore, bool suffixDateAfter, bool suffixDateNone)
+    {
+        var result = baseName;
+
+        // 接頭語の処理
+        if (!string.IsNullOrWhiteSpace(prefix))
         {
-            startTime = startTime.AddDays(1);
+            if (prefixDateBefore)
+            {
+                result = dateString + prefix + result;
+            }
+            else if (prefixDateAfter)
+            {
+                result = prefix + dateString + result;
+            }
+            else
+            {
+                result = prefix + result;
+            }
         }
-        
-        switch (comboBoxInterval.SelectedIndex)
+        else
         {
-            case 0: // 毎日
-                var dailyTrigger = new DailyTrigger { StartBoundary = startTime };
+            if (prefixDateBefore || prefixDateAfter)
+            {
+                result = dateString + result;
+            }
+        }
+
+        // 接尾語の処理
+        if (!string.IsNullOrWhiteSpace(suffix))
+        {
+            if (suffixDateBefore)
+            {
+                result = result + dateString + suffix;
+            }
+            else if (suffixDateAfter)
+            {
+                result = result + suffix + dateString;
+            }
+            else
+            {
+                result = result + suffix;
+            }
+        }
+        else
+        {
+            if (suffixDateBefore || suffixDateAfter)
+            {
+                result = result + dateString;
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// リアルタイムプレビューの更新
+    /// </summary>
+    private void UpdateFileNamePreview(object? sender, EventArgs e)
+    {
+        try
+        {
+            var previewText = new StringBuilder();
+            DateTime targetDate = DateTime.Now.AddDays((double)numericUpDownDateOffset.Value);
+            string dateString = targetDate.ToString("yyyyMMdd");
+
+            // フォルダ名プレビュー
+            if (checkBoxCreateFolder.Checked)
+            {
+                var folderBaseName = string.IsNullOrEmpty(textBoxFolderBaseName.Text) ? "Folder" : textBoxFolderBaseName.Text;
+                var folderName = BuildFileNameWithSettings(
+                    folderBaseName, 
+                    dateString, 
+                    textBoxFolderPrefix.Text, 
+                    textBoxFolderSuffix.Text,
+                    radioFolderPrefixDateBefore.Checked,
+                    radioFolderPrefixDateAfter.Checked,
+                    radioFolderPrefixDateNone.Checked,
+                    radioFolderSuffixDateBefore.Checked,
+                    radioFolderSuffixDateAfter.Checked,
+                    radioFolderSuffixDateNone.Checked);
+                previewText.AppendLine($"フォルダ名: {folderName}");
+            }
+
+            // ファイル名プレビュー
+            if (checkBoxCreateFile.Checked)
+            {
+                var sourceFiles = textBoxSourcePath.Text.Split(';')
+                    .Select(f => f.Trim())
+                    .Where(f => !string.IsNullOrEmpty(f))
+                    .ToArray();
+
+                if (sourceFiles.Length == 0)
+                {
+                    sourceFiles = new[] { "example.txt" };
+                }
+
+                foreach (var sourceFile in sourceFiles.Take(3))
+                {
+                    string fileName = Path.GetFileNameWithoutExtension(sourceFile);
+                    string extension = Path.GetExtension(sourceFile);
+                    
+                    if (string.IsNullOrEmpty(fileName))
+                    {
+                        fileName = "ファイル名";
+                        extension = ".txt";
+                    }
+
+                    // 文字列置換処理
+                    if (!string.IsNullOrEmpty(textBoxReplaceFrom.Text))
+                    {
+                        fileName = fileName.Replace(textBoxReplaceFrom.Text, textBoxReplaceTo.Text ?? "");
+                    }
+
+                    var processedFileName = BuildFileNameWithSettings(
+                        fileName, 
+                        dateString, 
+                        textBoxPrefix.Text, 
+                        textBoxSuffix.Text,
+                        radioPrefixDateBefore.Checked,
+                        radioPrefixDateAfter.Checked,
+                        radioPrefixDateNone.Checked,
+                        radioSuffixDateBefore.Checked,
+                        radioSuffixDateAfter.Checked,
+                        radioSuffixDateNone.Checked) + extension;
+                    
+                    if (checkBoxCreateFolder.Checked)
+                    {
+                        var folderBaseName = string.IsNullOrEmpty(textBoxFolderBaseName.Text) ? "Folder" : textBoxFolderBaseName.Text;
+                        var folderName = BuildFileNameWithSettings(
+                            folderBaseName, 
+                            dateString, 
+                            textBoxFolderPrefix.Text, 
+                            textBoxFolderSuffix.Text,
+                            radioFolderPrefixDateBefore.Checked,
+                            radioFolderPrefixDateAfter.Checked,
+                            radioFolderPrefixDateNone.Checked,
+                            radioFolderSuffixDateBefore.Checked,
+                            radioFolderSuffixDateAfter.Checked,
+                            radioFolderSuffixDateNone.Checked);
+                        previewText.AppendLine($"ファイル名: {folderName}\\{processedFileName}");
+                    }
+                    else
+                    {
+                        previewText.AppendLine($"ファイル名: {processedFileName}");
+                    }
+                }
+
+                if (sourceFiles.Length > 3)
+                {
+                    previewText.AppendLine($"... 他 {sourceFiles.Length - 3} ファイル");
+                }
+            }
+
+            if (previewText.Length == 0)
+            {
+                previewText.AppendLine("作成対象が選択されていません");
+            }
+
+            textBoxPreview.Text = previewText.ToString().TrimEnd();
+        }
+        catch (Exception ex)
+        {
+            textBoxPreview.Text = $"プレビューエラー: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// 日付位置の設定を取得
+    /// </summary>
+    private string GetDatePosition(bool dateBefore, bool dateAfter, bool dateNone)
+    {
+        if (dateBefore) return "before";
+        if (dateAfter) return "after";
+        return "none";
+    }
+
+    #endregion
+
+    #region タスク保存
+
+    /// <summary>
+    /// タスクの変更を保存
+    /// </summary>
+    private async System.Threading.Tasks.Task SaveTaskChangesAsync()
+    {
+        // 古いBATファイルをクリーンアップ
+        CleanupOldBatFiles(_taskName);
+        
+        // 新しいBATファイルを生成
+        var batFileName = $"{_taskName}_{DateTime.Now:yyyyMMddHHmmss}.bat";
+        var batFilePath = Path.Combine(_batFolderPath, batFileName);
+
+        // BATファイルの内容を生成
+        var batContent = GenerateBatContent();
+
+        // BATファイルを作成
+        var encoding = new UTF8Encoding(true);
+        await File.WriteAllTextAsync(batFilePath, batContent, encoding);
+
+        // タスクスケジューラーの設定を更新
+        UpdateScheduledTask(_taskName, batFilePath);
+
+        MessageBox.Show($"タスク '{_taskName}' の設定が正常に更新されました。", "成功", 
+            MessageBoxButtons.OK, MessageBoxIcon.Information);
+    }
+
+    /// <summary>
+    /// BATファイルの内容を生成（メインフォームと同じロジック）
+    /// </summary>
+    private string GenerateBatContent()
+    {
+        var batContent = new StringBuilder();
+        
+        // BATファイルヘッダー
+        batContent.AppendLine("@echo off");
+        batContent.AppendLine("chcp 65001 > nul");
+        batContent.AppendLine("setlocal");
+        batContent.AppendLine("");
+        batContent.AppendLine("echo TaskCrony v1.1.0 自動実行開始: %date% %time%");
+        batContent.AppendLine("");
+
+        // 日付オフセットを適用した日付文字列を動的に生成
+        var dateOffset = (int)numericUpDownDateOffset.Value;
+        batContent.AppendLine("rem 日付オフセットの計算");
+        if (dateOffset != 0)
+        {
+            batContent.AppendLine($"powershell -command \"$date = (Get-Date).AddDays({dateOffset}); $date.ToString('yyyyMMdd')\" > temp_date.txt");
+        }
+        else
+        {
+            batContent.AppendLine("powershell -command \"(Get-Date).ToString('yyyyMMdd')\" > temp_date.txt");
+        }
+        batContent.AppendLine("set /p DATE_STRING=<temp_date.txt");
+        batContent.AppendLine("del temp_date.txt");
+        batContent.AppendLine("");
+
+        // ファイル名構築関数（メインフォームと同じ）
+        GenerateBatFileNameFunction(batContent);
+
+        // メイン処理
+        batContent.AppendLine(":main");
+
+        // フォルダ作成処理
+        if (checkBoxCreateFolder.Checked)
+        {
+            GenerateFolderCreationBat(batContent);
+        }
+
+        // ファイルコピー処理
+        if (checkBoxCreateFile.Checked)
+        {
+            GenerateFileCopyBat(batContent);
+        }
+
+        batContent.AppendLine("echo TaskCrony v1.1.0 自動実行完了: %date% %time%");
+        batContent.AppendLine("endlocal");
+
+        return batContent.ToString();
+    }
+
+    /// <summary>
+    /// BATファイル内のファイル名構築関数を生成
+    /// </summary>
+    private void GenerateBatFileNameFunction(StringBuilder batContent)
+    {
+        batContent.AppendLine("rem ファイル名構築関数");
+        batContent.AppendLine("goto :main");
+        batContent.AppendLine("");
+        batContent.AppendLine(":build_filename");
+        batContent.AppendLine("set BASE_NAME=%1");
+        batContent.AppendLine("set PREFIX=%2");
+        batContent.AppendLine("set SUFFIX=%3");
+        batContent.AppendLine("set PREFIX_DATE_POS=%4");
+        batContent.AppendLine("set SUFFIX_DATE_POS=%5");
+        batContent.AppendLine("");
+        batContent.AppendLine("set RESULT=%BASE_NAME%");
+        batContent.AppendLine("");
+        
+        // 接頭語処理
+        batContent.AppendLine("if not \"%PREFIX%\"==\"\" (");
+        batContent.AppendLine("    if \"%PREFIX_DATE_POS%\"==\"before\" (");
+        batContent.AppendLine("        set RESULT=%DATE_STRING%%PREFIX%%RESULT%");
+        batContent.AppendLine("    ) else if \"%PREFIX_DATE_POS%\"==\"after\" (");
+        batContent.AppendLine("        set RESULT=%PREFIX%%DATE_STRING%%RESULT%");
+        batContent.AppendLine("    ) else (");
+        batContent.AppendLine("        set RESULT=%PREFIX%%RESULT%");
+        batContent.AppendLine("    )");
+        batContent.AppendLine(") else (");
+        batContent.AppendLine("    if \"%PREFIX_DATE_POS%\"==\"before\" set RESULT=%DATE_STRING%%RESULT%");
+        batContent.AppendLine("    if \"%PREFIX_DATE_POS%\"==\"after\" set RESULT=%DATE_STRING%%RESULT%");
+        batContent.AppendLine(")");
+        batContent.AppendLine("");
+        
+        // 接尾語処理
+        batContent.AppendLine("if not \"%SUFFIX%\"==\"\" (");
+        batContent.AppendLine("    if \"%SUFFIX_DATE_POS%\"==\"before\" (");
+        batContent.AppendLine("        set RESULT=%RESULT%%DATE_STRING%%SUFFIX%");
+        batContent.AppendLine("    ) else if \"%SUFFIX_DATE_POS%\"==\"after\" (");
+        batContent.AppendLine("        set RESULT=%RESULT%%SUFFIX%%DATE_STRING%");
+        batContent.AppendLine("    ) else (");
+        batContent.AppendLine("        set RESULT=%RESULT%%SUFFIX%");
+        batContent.AppendLine("    )");
+        batContent.AppendLine(") else (");
+        batContent.AppendLine("    if \"%SUFFIX_DATE_POS%\"==\"before\" set RESULT=%RESULT%%DATE_STRING%");
+        batContent.AppendLine("    if \"%SUFFIX_DATE_POS%\"==\"after\" set RESULT=%RESULT%%DATE_STRING%");
+        batContent.AppendLine(")");
+        batContent.AppendLine("");
+        batContent.AppendLine("goto :eof");
+        batContent.AppendLine("");
+    }
+
+    /// <summary>
+    /// フォルダ作成のBATコードを生成
+    /// </summary>
+    private void GenerateFolderCreationBat(StringBuilder batContent)
+    {
+        var folderBaseName = string.IsNullOrEmpty(textBoxFolderBaseName.Text) ? "Folder" : textBoxFolderBaseName.Text;
+        var folderPrefix = textBoxFolderPrefix.Text;
+        var folderSuffix = textBoxFolderSuffix.Text;
+        var folderPrefixDatePos = GetDatePosition(
+            radioFolderPrefixDateBefore.Checked, 
+            radioFolderPrefixDateAfter.Checked, 
+            radioFolderPrefixDateNone.Checked);
+        var folderSuffixDatePos = GetDatePosition(
+            radioFolderSuffixDateBefore.Checked, 
+            radioFolderSuffixDateAfter.Checked, 
+            radioFolderSuffixDateNone.Checked);
+        
+        batContent.AppendLine($"call :build_filename \"{folderBaseName}\" \"{folderPrefix}\" \"{folderSuffix}\" \"{folderPrefixDatePos}\" \"{folderSuffixDatePos}\"");
+        batContent.AppendLine("set FOLDER_NAME=%RESULT%");
+        batContent.AppendLine($"set FOLDER_PATH=\"{textBoxDestinationPath.Text}\\%FOLDER_NAME%\"");
+        batContent.AppendLine("");
+        batContent.AppendLine("echo フォルダ作成: %FOLDER_PATH%");
+        batContent.AppendLine("if not exist %FOLDER_PATH% mkdir %FOLDER_PATH%");
+        batContent.AppendLine("");
+    }
+
+    /// <summary>
+    /// ファイルコピーのBATコードを生成
+    /// </summary>
+    private void GenerateFileCopyBat(StringBuilder batContent)
+    {
+        var sourceFiles = textBoxSourcePath.Text.Split(';')
+            .Select(f => f.Trim())
+            .Where(f => !string.IsNullOrEmpty(f))
+            .ToArray();
+
+        var filePrefix = textBoxPrefix.Text;
+        var fileSuffix = textBoxSuffix.Text;
+        var filePrefixDatePos = GetDatePosition(
+            radioPrefixDateBefore.Checked, 
+            radioPrefixDateAfter.Checked, 
+            radioPrefixDateNone.Checked);
+        var fileSuffixDatePos = GetDatePosition(
+            radioSuffixDateBefore.Checked, 
+            radioSuffixDateAfter.Checked, 
+            radioSuffixDateNone.Checked);
+
+        foreach (var sourceFile in sourceFiles)
+        {
+            var fileExtension = Path.GetExtension(sourceFile);
+            var baseFileName = Path.GetFileNameWithoutExtension(sourceFile);
+            
+            // 文字列置換処理
+            if (!string.IsNullOrEmpty(textBoxReplaceFrom.Text))
+            {
+                baseFileName = baseFileName.Replace(textBoxReplaceFrom.Text, textBoxReplaceTo.Text ?? "");
+            }
+
+            batContent.AppendLine($"call :build_filename \"{baseFileName}\" \"{filePrefix}\" \"{fileSuffix}\" \"{filePrefixDatePos}\" \"{fileSuffixDatePos}\"");
+            batContent.AppendLine($"set FILE_NAME=%RESULT%{fileExtension}");
+            
+            if (checkBoxCreateFolder.Checked)
+            {
+                batContent.AppendLine("set FILE_PATH=%FOLDER_PATH%\\%FILE_NAME%");
+                batContent.AppendLine("echo ファイルコピー（フォルダ内）: %FILE_PATH%");
+            }
+            else
+            {
+                batContent.AppendLine($"set FILE_PATH=\"{textBoxDestinationPath.Text}\\%FILE_NAME%\"");
+                batContent.AppendLine("echo ファイルコピー: %FILE_PATH%");
+            }
+            
+            batContent.AppendLine($"copy \"{sourceFile}\" %FILE_PATH%");
+            batContent.AppendLine("");
+        }
+    }
+
+    /// <summary>
+    /// スケジュールされたタスクを更新
+    /// </summary>
+    private void UpdateScheduledTask(string taskName, string batFilePath)
+    {
+        using var taskService = new TaskService();
+
+        // 既存のタスクを削除
+        var existingTask = taskService.GetTask(taskName);
+        if (existingTask != null)
+        {
+            taskService.RootFolder.DeleteTask(taskName);
+        }
+
+        // 新しいタスクを作成
+        var taskDefinition = taskService.NewTask();
+        taskDefinition.RegistrationInfo.Description = $"TaskCrony v1.1.0 で作成されたタスク: {taskName}";
+        taskDefinition.Principal.LogonType = TaskLogonType.InteractiveToken;
+
+        // トリガーの設定
+        CreateTaskTrigger(taskDefinition);
+
+        // アクションの設定
+        var execAction = new ExecAction("cmd.exe", $"/c \"{batFilePath}\"", null);
+        taskDefinition.Actions.Add(execAction);
+
+        // タスクを登録
+        taskService.RootFolder.RegisterTaskDefinition(taskName, taskDefinition);
+    }
+
+    /// <summary>
+    /// タスクトリガーを作成
+    /// </summary>
+    private void CreateTaskTrigger(TaskDefinition taskDefinition)
+    {
+        var selectedScheduleType = comboBoxScheduleType.SelectedIndex;
+        switch (selectedScheduleType)
+        {
+            case 0: // 今すぐ実行
+                var timeTrigger = new TimeTrigger(dateTimePickerStart.Value);
+                taskDefinition.Triggers.Add(timeTrigger);
+                break;
+            case 1: // 毎日
+                var dailyTrigger = new DailyTrigger
+                {
+                    StartBoundary = dateTimePickerStart.Value,
+                    DaysInterval = 1
+                };
                 taskDefinition.Triggers.Add(dailyTrigger);
                 break;
-                
-            case 1: // 毎週
-                var weeklyTrigger = new WeeklyTrigger { StartBoundary = startTime, DaysOfWeek = DaysOfTheWeek.AllDays };
+            case 2: // 毎週
+                var weeklyTrigger = new WeeklyTrigger
+                {
+                    StartBoundary = dateTimePickerStart.Value,
+                    WeeksInterval = 1,
+                    DaysOfWeek = DaysOfTheWeek.AllDays
+                };
                 taskDefinition.Triggers.Add(weeklyTrigger);
                 break;
-                
-            case 2: // 毎月
-                var monthlyTrigger = new MonthlyTrigger { StartBoundary = startTime };
+            case 3: // 毎月
+                var monthlyTrigger = new MonthlyTrigger
+                {
+                    StartBoundary = dateTimePickerStart.Value,
+                    MonthsOfYear = MonthsOfTheYear.AllMonths,
+                    DaysOfMonth = new int[] { dateTimePickerStart.Value.Day }
+                };
                 taskDefinition.Triggers.Add(monthlyTrigger);
                 break;
         }
-        
-        // タスクの有効/無効設定
-        taskDefinition.Settings.Enabled = checkBoxEnableTask.Checked;
-        
-        // タスクの更新
-        taskService.RootFolder.RegisterTaskDefinition(_taskName, taskDefinition);
     }
 
+    /// <summary>
+    /// 同じタスク名の古いBATファイルを削除
+    /// </summary>
+    private void CleanupOldBatFiles(string taskName)
+    {
+        try
+        {
+            var batFiles = Directory.GetFiles(_batFolderPath, "*.bat");
+            foreach (var batFile in batFiles)
+            {
+                var fileName = Path.GetFileNameWithoutExtension(batFile);
+                if (fileName.StartsWith(taskName + "_") && fileName != taskName)
+                {
+                    File.Delete(batFile);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // エラーは無視（ファイル削除は必須ではない）
+            System.Diagnostics.Debug.WriteLine($"BATファイルクリーンアップエラー: {ex.Message}");
+        }
+    }
+
+    #endregion
+
+    #region リソース管理
+
+    /// <summary>
+    /// リソースの解放
+    /// </summary>
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            components?.Dispose();
+            _folderBrowserDialog?.Dispose();
+            _openFileDialog?.Dispose();
+        }
+        base.Dispose(disposing);
+    }
+
+    #endregion
 }
