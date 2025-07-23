@@ -1,4 +1,4 @@
-# TaskCrony v1.1.0
+# TaskCrony v0.1.0
 
 **Windows Task Scheduler Automation Tool**
 
@@ -248,4 +248,4 @@ copy "%SOURCE%" "%DESTINATION%\%FOLDER_NAME%\%FILE_NAME%"
 
 ---
 
-**TaskCrony v1.1.0** - より効率的なファイル管理をあなたに
+**TaskCrony v0.1.0** - より効率的なファイル管理をあなたに

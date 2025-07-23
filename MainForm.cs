@@ -511,7 +511,7 @@ public partial class MainForm : Form
     /// <summary>
     /// ファイル名・フォルダ名を構築（仕様書4.1.3準拠）
     /// </summary>
-    private string BuildFileNameWithSettings(string baseName, string dateString, string prefix, string suffix, 
+    internal string BuildFileNameWithSettings(string baseName, string dateString, string prefix, string suffix, 
         bool prefixDateBefore, bool prefixDateAfter, bool prefixDateNone, 
         bool suffixDateBefore, bool suffixDateAfter, bool suffixDateNone)
     {

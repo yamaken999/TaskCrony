@@ -485,10 +485,10 @@ namespace TaskCrony
 
             this.labelPreview.Text = "プレビュー:";
             this.labelPreview.Location = new Point(15, 55);
-            this.labelPreview.Size = new Size(80, 33);
+            this.labelPreview.Size = new Size(80, 35);
 
             this.textBoxPreview.Location = new Point(100, 52);
-            this.textBoxPreview.Size = new Size(1040, 40);
+            this.textBoxPreview.Size = new Size(1040, 45);
             this.textBoxPreview.Multiline = true;
             this.textBoxPreview.ReadOnly = true;
             this.textBoxPreview.BackColor = Color.FromArgb(248, 248, 248);
