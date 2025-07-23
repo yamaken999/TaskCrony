@@ -1080,6 +1080,9 @@ public partial class MainForm : Form
             // 関連するBATファイルを削除
             CleanupOldBatFiles(taskName);
             
+            // 関連するJSONファイルを削除
+            CleanupTaskJsonFiles(taskName);
+            
             MessageBox.Show($"タスク '{taskName}' を削除しました。", "成功", 
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
             
@@ -1114,6 +1117,27 @@ public partial class MainForm : Form
         catch (Exception ex)
         {
             Debug.WriteLine($"BATファイルクリーンアップエラー: {ex.Message}");
+            // エラーは無視（ファイル削除は必須ではない）
+        }
+    }
+
+    /// <summary>
+    /// タスクに関連するJSONファイルを削除
+    /// </summary>
+    private void CleanupTaskJsonFiles(string taskName)
+    {
+        try
+        {
+            var jsonFilePath = Path.Combine(_batFolderPath, $"{taskName}_settings.json");
+            if (File.Exists(jsonFilePath))
+            {
+                File.Delete(jsonFilePath);
+                Debug.WriteLine($"JSONファイルを削除: {jsonFilePath}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"JSONファイルクリーンアップエラー: {ex.Message}");
             // エラーは無視（ファイル削除は必須ではない）
         }
     }

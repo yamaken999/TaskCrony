@@ -1048,6 +1048,9 @@ public partial class TaskEditForm : Form
         var encoding = new UTF8Encoding(true);
         await File.WriteAllTextAsync(batFilePath, batContent, encoding);
 
+        // JSONファイルに設定を保存（編集後の設定を保存）
+        await SaveTaskSettingsToJson(_taskName);
+
         // タスクスケジューラーの設定を更新
         UpdateScheduledTask(_taskName, batFilePath);
 
@@ -1330,6 +1333,64 @@ public partial class TaskEditForm : Form
             // エラーは無視（ファイル削除は必須ではない）
             System.Diagnostics.Debug.WriteLine($"BATファイルクリーンアップエラー: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// タスク設定をJSONファイルに保存
+    /// </summary>
+    private async System.Threading.Tasks.Task SaveTaskSettingsToJson(string taskName)
+    {
+        try
+        {
+            var settings = new
+            {
+                TaskName = taskName,
+                CreateFile = checkBoxCreateFile.Checked,
+                CreateFolder = checkBoxCreateFolder.Checked,
+                SourcePath = textBoxSourcePath.Text,
+                DestinationPath = textBoxDestinationPath.Text,
+                Prefix = textBoxPrefix.Text,
+                Suffix = textBoxSuffix.Text,
+                PrefixDatePosition = GetRadioButtonValue(radioPrefixDateBefore, radioPrefixDateAfter, radioPrefixDateNone),
+                SuffixDatePosition = GetRadioButtonValue(radioSuffixDateBefore, radioSuffixDateAfter, radioSuffixDateNone),
+                FolderBaseName = textBoxFolderBaseName.Text,
+                FolderPrefix = textBoxFolderPrefix.Text,
+                FolderSuffix = textBoxFolderSuffix.Text,
+                FolderPrefixDatePosition = GetRadioButtonValue(radioFolderPrefixDateBefore, radioFolderPrefixDateAfter, radioFolderPrefixDateNone),
+                FolderSuffixDatePosition = GetRadioButtonValue(radioFolderSuffixDateBefore, radioFolderSuffixDateAfter, radioFolderSuffixDateNone),
+                ReplaceFrom = textBoxReplaceFrom.Text,
+                ReplaceTo = textBoxReplaceTo.Text,
+                DateOffset = (int)numericUpDownDateOffset.Value,
+                ScheduleType = comboBoxScheduleType.SelectedIndex,
+                StartDateTime = dateTimePickerStart.Value,
+                UpdatedAt = DateTime.Now
+            };
+
+            var settingsJson = System.Text.Json.JsonSerializer.Serialize(settings, new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
+
+            var settingsPath = Path.Combine(_batFolderPath, $"{taskName}_settings.json");
+            await File.WriteAllTextAsync(settingsPath, settingsJson, Encoding.UTF8);
+            
+            System.Diagnostics.Debug.WriteLine($"JSONファイルを更新: {settingsPath}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"JSON設定保存エラー: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// ラジオボタンの値を取得
+    /// </summary>
+    private string GetRadioButtonValue(RadioButton before, RadioButton after, RadioButton none)
+    {
+        if (before.Checked) return "Before";
+        if (after.Checked) return "After";
+        return "None";
     }
 
     #endregion
