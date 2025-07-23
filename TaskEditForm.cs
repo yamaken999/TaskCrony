@@ -180,7 +180,21 @@ public partial class TaskEditForm : Form
             else
             {
                 System.Diagnostics.Debug.WriteLine("JSONファイルから設定読み込み成功");
+                
+                // JSONファイルから読み込み成功時もタスクスケジューラから最新のスケジュール設定を取得
+                using var taskService = new TaskService();
+                var task = taskService.GetTask(_taskName);
+                
+                if (task != null)
+                {
+                    // 最新のスケジュール設定で上書き
+                    LoadScheduleSettings(task);
+                }
             }
+            
+            // 設定読み込み完了後にコントロール状態とプレビューを更新
+            UpdateControlsEnabledState();
+            UpdateFileNamePreview(null, EventArgs.Empty);
         }
         catch (Exception ex)
         {
@@ -224,6 +238,57 @@ public partial class TaskEditForm : Form
                     System.Diagnostics.Debug.WriteLine($"JSONから作成先パス読み込み: {destPathValue}");
                 }
 
+                // ファイル名設定
+                if (settings.TryGetValue("Prefix", out var prefixValue))
+                    textBoxPrefix.Text = prefixValue.ToString() ?? "";
+
+                if (settings.TryGetValue("Suffix", out var suffixValue))
+                    textBoxSuffix.Text = suffixValue.ToString() ?? "";
+
+                // ファイル設定のラジオボタン
+                if (settings.TryGetValue("PrefixDatePosition", out var prefixDatePos))
+                {
+                    var pos = prefixDatePos.ToString() ?? "";
+                    radioPrefixDateBefore.Checked = pos == "Before";
+                    radioPrefixDateAfter.Checked = pos == "After";
+                    radioPrefixDateNone.Checked = pos == "None" || pos == "";
+                }
+
+                if (settings.TryGetValue("SuffixDatePosition", out var suffixDatePos))
+                {
+                    var pos = suffixDatePos.ToString() ?? "";
+                    radioSuffixDateBefore.Checked = pos == "Before";
+                    radioSuffixDateAfter.Checked = pos == "After";
+                    radioSuffixDateNone.Checked = pos == "None" || pos == "";
+                }
+
+                // フォルダ設定
+                if (settings.TryGetValue("FolderBaseName", out var folderBaseValue))
+                    textBoxFolderBaseName.Text = folderBaseValue.ToString() ?? "Folder";
+
+                if (settings.TryGetValue("FolderPrefix", out var folderPrefixValue))
+                    textBoxFolderPrefix.Text = folderPrefixValue.ToString() ?? "";
+
+                if (settings.TryGetValue("FolderSuffix", out var folderSuffixValue))
+                    textBoxFolderSuffix.Text = folderSuffixValue.ToString() ?? "";
+
+                // フォルダ設定のラジオボタン
+                if (settings.TryGetValue("FolderPrefixDatePosition", out var folderPrefixDatePos))
+                {
+                    var pos = folderPrefixDatePos.ToString() ?? "";
+                    radioFolderPrefixDateBefore.Checked = pos == "Before";
+                    radioFolderPrefixDateAfter.Checked = pos == "After";
+                    radioFolderPrefixDateNone.Checked = pos == "None" || pos == "";
+                }
+
+                if (settings.TryGetValue("FolderSuffixDatePosition", out var folderSuffixDatePos))
+                {
+                    var pos = folderSuffixDatePos.ToString() ?? "";
+                    radioFolderSuffixDateBefore.Checked = pos == "Before";
+                    radioFolderSuffixDateAfter.Checked = pos == "After";
+                    radioFolderSuffixDateNone.Checked = pos == "None" || pos == "";
+                }
+
                 // 文字列置換
                 if (settings.TryGetValue("ReplaceFrom", out var replaceFromValue))
                     textBoxReplaceFrom.Text = replaceFromValue.ToString() ?? "";
@@ -231,8 +296,30 @@ public partial class TaskEditForm : Form
                 if (settings.TryGetValue("ReplaceTo", out var replaceToValue))
                     textBoxReplaceTo.Text = replaceToValue.ToString() ?? "";
 
-                // 他の設定も必要に応じて読み込み...
+                // 日付オフセット
+                if (settings.TryGetValue("DateOffset", out var dateOffsetValue) && int.TryParse(dateOffsetValue.ToString(), out var dateOffset))
+                {
+                    numericUpDownDateOffset.Value = Math.Max(-365, Math.Min(365, dateOffset));
+                    System.Diagnostics.Debug.WriteLine($"JSONから日付オフセット読み込み: {dateOffset}");
+                }
 
+                // スケジュール設定
+                if (settings.TryGetValue("ScheduleType", out var scheduleTypeValue) && int.TryParse(scheduleTypeValue.ToString(), out var scheduleType))
+                {
+                    if (scheduleType >= 0 && scheduleType < comboBoxScheduleType.Items.Count)
+                    {
+                        comboBoxScheduleType.SelectedIndex = scheduleType;
+                        System.Diagnostics.Debug.WriteLine($"JSONからスケジュール種別読み込み: {scheduleType}");
+                    }
+                }
+
+                if (settings.TryGetValue("StartDateTime", out var startDateTimeValue) && DateTime.TryParse(startDateTimeValue.ToString(), out var startDateTime))
+                {
+                    dateTimePickerStart.Value = startDateTime;
+                    System.Diagnostics.Debug.WriteLine($"JSONから開始日時読み込み: {startDateTime}");
+                }
+
+                System.Diagnostics.Debug.WriteLine("JSONファイルからすべての設定を読み込み完了");
                 return true;
             }
         }
