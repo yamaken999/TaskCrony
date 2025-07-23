@@ -589,7 +589,7 @@ namespace TaskCrony
 
             this.buttonOpenTaskScheduler.Text = "タスクスケジューラ起動";
             this.buttonOpenTaskScheduler.Location = new Point(buttonStartX + buttonSpacing * 4, buttonY);
-            this.buttonOpenTaskScheduler.Size = new Size(140, 30);
+            this.buttonOpenTaskScheduler.Size = new Size(160, 35);
 
             // タスク管理タブにコントロールを追加
             this.tabPageTaskManagement.Controls.AddRange(new Control[]
