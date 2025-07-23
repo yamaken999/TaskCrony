@@ -565,35 +565,6 @@ public partial class MainForm : Form
             {
                 result = result + "_" + dateString;
             }
-            if (prefixDateBefore || prefixDateAfter)
-            {
-                result = dateString + "_" + result;
-            }
-        }
-
-        // 接尾語の処理
-        if (!string.IsNullOrWhiteSpace(suffix))
-        {
-            if (suffixDateBefore)
-            {
-                result = result + "_" + dateString + suffix;
-            }
-            else if (suffixDateAfter)
-            {
-                result = result + "_" + suffix + dateString;
-            }
-            else
-            {
-                result = result + "_" + suffix;
-            }
-        }
-        else
-        {
-            // 接尾語が空でも日付チェックボックスが選択されている場合
-            if (suffixDateBefore || suffixDateAfter)
-            {
-                result = result + "_" + dateString;
-            }
         }
 
         return result;

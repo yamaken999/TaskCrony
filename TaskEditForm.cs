@@ -153,28 +153,95 @@ public partial class TaskEditForm : Form
     {
         try
         {
-            // Windowsタスクスケジューラーからタスク情報を取得
-            using var taskService = new TaskService();
-            var task = taskService.GetTask(_taskName);
+            // 最初にJSONファイルから設定を読み込み試行
+            bool jsonLoaded = LoadTaskSettingsFromJson();
             
-            if (task == null)
+            if (!jsonLoaded)
             {
-                MessageBox.Show($"タスク '{_taskName}' が見つかりません。", "エラー", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
+                System.Diagnostics.Debug.WriteLine("JSONファイルから設定読み込み失敗、BATファイルから復元します");
+                
+                // Windowsタスクスケジューラーからタスク情報を取得
+                using var taskService = new TaskService();
+                var task = taskService.GetTask(_taskName);
+                
+                if (task == null)
+                {
+                    MessageBox.Show($"タスク '{_taskName}' が見つかりません。", "エラー", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
 
-            // スケジュール設定を読み込み
-            LoadScheduleSettings(task);
-            
-            // BATファイルの内容を解析して設定を復元
-            LoadBatFileSettings(task);
+                // スケジュール設定を読み込み
+                LoadScheduleSettings(task);
+                
+                // BATファイルの内容を解析して設定を復元
+                LoadBatFileSettings(task);
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("JSONファイルから設定読み込み成功");
+            }
         }
         catch (Exception ex)
         {
             MessageBox.Show($"タスク設定の読み込みに失敗しました:\n{ex.Message}", "エラー", 
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+    }
+
+    /// <summary>
+    /// JSONファイルから設定を読み込み
+    /// </summary>
+    private bool LoadTaskSettingsFromJson()
+    {
+        try
+        {
+            var settingsPath = Path.Combine(_batFolderPath, $"{_taskName}_settings.json");
+            if (!File.Exists(settingsPath))
+            {
+                return false;
+            }
+
+            var settingsJson = File.ReadAllText(settingsPath, Encoding.UTF8);
+            var settings = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(settingsJson);
+
+            if (settings != null)
+            {
+                // 基本設定
+                if (settings.TryGetValue("CreateFile", out var createFileValue) && bool.TryParse(createFileValue.ToString(), out var createFile))
+                    checkBoxCreateFile.Checked = createFile;
+
+                if (settings.TryGetValue("CreateFolder", out var createFolderValue) && bool.TryParse(createFolderValue.ToString(), out var createFolder))
+                    checkBoxCreateFolder.Checked = createFolder;
+
+                // パス設定
+                if (settings.TryGetValue("SourcePath", out var sourcePathValue))
+                    textBoxSourcePath.Text = sourcePathValue.ToString() ?? "";
+
+                if (settings.TryGetValue("DestinationPath", out var destPathValue))
+                {
+                    textBoxDestinationPath.Text = destPathValue.ToString() ?? "";
+                    System.Diagnostics.Debug.WriteLine($"JSONから作成先パス読み込み: {destPathValue}");
+                }
+
+                // 文字列置換
+                if (settings.TryGetValue("ReplaceFrom", out var replaceFromValue))
+                    textBoxReplaceFrom.Text = replaceFromValue.ToString() ?? "";
+
+                if (settings.TryGetValue("ReplaceTo", out var replaceToValue))
+                    textBoxReplaceTo.Text = replaceToValue.ToString() ?? "";
+
+                // 他の設定も必要に応じて読み込み...
+
+                return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"JSON設定読み込みエラー: {ex.Message}");
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -220,15 +287,29 @@ public partial class TaskEditForm : Form
             if (task.Definition.Actions.Count > 0 && task.Definition.Actions[0] is ExecAction execAction)
             {
                 var batFilePath = ExtractBatFilePathFromCommand(execAction.Arguments);
+                System.Diagnostics.Debug.WriteLine($"BATファイルパス: {batFilePath}");
+                
                 if (!string.IsNullOrEmpty(batFilePath) && File.Exists(batFilePath))
                 {
                     var batContent = File.ReadAllText(batFilePath, Encoding.UTF8);
+                    System.Diagnostics.Debug.WriteLine($"BATファイル内容読み込み成功: {batContent.Length}文字");
+                    
+                    // デバッグ用：BATファイルの設定コメント部分を表示
+                    var lines = batContent.Split('\n');
+                    var settingsLines = lines.Where(l => l.Contains("rem DESTINATION=") || l.Contains("rem REPLACE_")).ToArray();
+                    System.Diagnostics.Debug.WriteLine($"設定コメント: {string.Join(", ", settingsLines)}");
+                    
                     ParseBatFileContent(batContent);
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"BATファイルが見つからない: {batFilePath}");
                 }
             }
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"BATファイル解析エラー: {ex.Message}");
             MessageBox.Show($"BATファイルの解析に失敗しました:\n{ex.Message}", "警告", 
                 MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
@@ -300,6 +381,7 @@ public partial class TaskEditForm : Form
                 if (!string.IsNullOrEmpty(destination))
                 {
                     textBoxDestinationPath.Text = destination;
+                    System.Diagnostics.Debug.WriteLine($"作成先パス読み込み: {destination}");
                 }
                 continue;
             }
@@ -308,6 +390,7 @@ public partial class TaskEditForm : Form
             {
                 var replaceFrom = line.Substring("rem REPLACE_FROM=".Length).Trim();
                 textBoxReplaceFrom.Text = replaceFrom;
+                System.Diagnostics.Debug.WriteLine($"置換前文字列読み込み: {replaceFrom}");
                 continue;
             }
 
@@ -315,6 +398,7 @@ public partial class TaskEditForm : Form
             {
                 var replaceTo = line.Substring("rem REPLACE_TO=".Length).Trim();
                 textBoxReplaceTo.Text = replaceTo;
+                System.Diagnostics.Debug.WriteLine($"置換後文字列読み込み: {replaceTo}");
                 continue;
             }
 
@@ -325,7 +409,11 @@ public partial class TaskEditForm : Form
                 var folderPath = folderPathMatch.Groups[1].Value;
                 // "%FOLDER_NAME%" を除去して基本パスを取得
                 var basePath = folderPath.Replace("\\%FOLDER_NAME%", "");
-                textBoxDestinationPath.Text = basePath;
+                if (!basePath.Contains("%")) // 環境変数が含まれていない場合のみ
+                {
+                    textBoxDestinationPath.Text = basePath;
+                    System.Diagnostics.Debug.WriteLine($"フォルダパスから作成先読み込み: {basePath}");
+                }
                 continue;
             }
 
@@ -338,6 +426,7 @@ public partial class TaskEditForm : Form
                 if (!filePath.Contains("%"))
                 {
                     textBoxDestinationPath.Text = filePath;
+                    System.Diagnostics.Debug.WriteLine($"ファイルパスから作成先読み込み: {filePath}");
                 }
                 continue;
             }
