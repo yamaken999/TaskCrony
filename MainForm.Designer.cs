@@ -561,6 +561,7 @@ namespace TaskCrony
             });
 
             // ボタン配置（位置調整）
+            // v0.1.0配布パッケージ作成完了 - UIボタンレイアウト最適化
             int buttonY = 540;
             int buttonSpacing = 120;
             int buttonStartX = 300;
