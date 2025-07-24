@@ -9,6 +9,9 @@ on:
       - 'README.md'
       - 'LICENSE.txt'
 
+permissions:
+  contents: write
+  
 jobs:
   release:
     runs-on: windows-latest
@@ -108,26 +111,14 @@ jobs:
       
     - name: Create Release
       if: steps.check_tag.outputs.TAG_EXISTS == 'false'
-      uses: actions/create-release@v1
+      run: |
+        gh release create "v${{ steps.get_version.outputs.VERSION }}" `
+          --title "TaskCrony v${{ steps.get_version.outputs.VERSION }}" `
+          --notes '${{ steps.release_notes.outputs.RELEASE_NOTES }}' `
+          "./TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip#TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v${{ steps.get_version.outputs.VERSION }}
-        release_name: TaskCrony v${{ steps.get_version.outputs.VERSION }}
-        body: ${{ steps.release_notes.outputs.RELEASE_NOTES }}
-        draft: false
-        prerelease: false
-        
-    - name: Upload Release Asset
-      if: steps.check_tag.outputs.TAG_EXISTS == 'false'
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip
-        asset_name: TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip
-        asset_content_type: application/zip
+      shell: pwsh
         
     - name: Update existing release (if tag exists)
       if: steps.check_tag.outputs.TAG_EXISTS == 'true'

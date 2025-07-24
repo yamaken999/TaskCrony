@@ -5,7 +5,7 @@ using System.Text;
 namespace TaskCrony;
 
 /// <summary>
-/// TaskCrony メインフォーム v1.1.0
+/// TaskCrony メインフォーム v1.2.0
 /// </summary>
 public partial class MainForm : Form
 {
@@ -26,6 +26,10 @@ public partial class MainForm : Form
     {
         InitializeComponent();
         
+        // ログ初期化とアプリケーション開始ログ
+        Logger.Info("TaskCrony v1.2.0 アプリケーション開始");
+        Logger.CleanupOldLogs();
+        
         // BATフォルダのパスを設定（実行ファイルと同じディレクトリにBATフォルダを作成）
         _batFolderPath = Path.Combine(Application.StartupPath, "BAT");
         
@@ -33,6 +37,7 @@ public partial class MainForm : Form
         if (!Directory.Exists(_batFolderPath))
         {
             Directory.CreateDirectory(_batFolderPath);
+            Logger.Info($"BATフォルダを作成しました: {_batFolderPath}");
         }
 
         // モダンテーマを適用
@@ -40,6 +45,9 @@ public partial class MainForm : Form
         
         InitializeControls();
         LoadExistingTasks();
+        
+        // バックグラウンドでバージョンチェック開始
+        StartVersionCheckAsync();
     }
 
     #endregion
@@ -83,6 +91,10 @@ public partial class MainForm : Form
         buttonEditTask.Click += ButtonEditTask_Click;
         buttonRunTask.Click += ButtonRunTask_Click;
         buttonOpenTaskScheduler.Click += ButtonOpenTaskScheduler_Click;
+        
+        // 新機能のボタンイベント
+        // buttonViewLogs.Click += ButtonViewLogs_Click;
+        // buttonCheckUpdate.Click += ButtonCheckUpdate_Click;
         
         // チェックボックスイベント
         checkBoxCreateFile.CheckedChanged += CheckBoxCreateFile_CheckedChanged;
@@ -362,15 +374,83 @@ public partial class MainForm : Form
     {
         try
         {
+            Logger.Info("タスクスケジューラー起動要求");
             Process.Start(new ProcessStartInfo
             {
                 FileName = "taskschd.msc",
                 UseShellExecute = true
             });
+            Logger.Info("タスクスケジューラー起動成功");
         }
         catch (Exception ex)
         {
+            Logger.Error("タスクスケジューラーの起動に失敗", ex);
             MessageBox.Show($"タスクスケジューラの起動に失敗しました:\n{ex.Message}", "エラー", 
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    /// <summary>
+    /// ログビューアー表示ボタンクリックイベント
+    /// </summary>
+    private void ButtonViewLogs_Click(object? sender, EventArgs e)
+    {
+        try
+        {
+            Logger.Info("ログビューアー表示要求");
+            using var logViewer = new LogViewerForm();
+            logViewer.ShowDialog(this);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("ログビューアーの表示に失敗", ex);
+            MessageBox.Show($"ログビューアーの表示に失敗しました:\n{ex.Message}", "エラー", 
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    /// <summary>
+    /// 更新チェックボタンクリックイベント
+    /// </summary>
+    private async void ButtonCheckUpdate_Click(object? sender, EventArgs e)
+    {
+        try
+        {
+            Logger.Info("手動バージョンチェック開始");
+            
+            // プログレス表示
+            var originalText = ((Button)sender!).Text;
+            ((Button)sender).Text = "チェック中...";
+            ((Button)sender).Enabled = false;
+            
+            var versionInfo = await VersionChecker.CheckLatestVersionAsync();
+            
+            ((Button)sender).Text = originalText;
+            ((Button)sender).Enabled = true;
+            
+            if (versionInfo == null)
+            {
+                MessageBox.Show("バージョンチェックに失敗しました。\nインターネット接続を確認してください。", 
+                    "バージョンチェック", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            
+            if (versionInfo.IsNewer)
+            {
+                Logger.Info($"新しいバージョンが利用可能: {versionInfo.Version}");
+                VersionChecker.ShowUpdateDialog(versionInfo, this);
+            }
+            else
+            {
+                Logger.Info("最新バージョンを使用中");
+                MessageBox.Show($"お使いのTaskCronyは最新バージョンです。\n\n現在のバージョン: {VersionChecker.GetCurrentVersion()}", 
+                    "バージョンチェック", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("手動バージョンチェック中にエラーが発生", ex);
+            MessageBox.Show($"バージョンチェック中にエラーが発生しました:\n{ex.Message}", "エラー", 
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
@@ -681,7 +761,35 @@ public partial class MainForm : Form
         }
         catch (Exception ex)
         {
+            Logger.Error("プレビュー更新中にエラーが発生", ex);
             textBoxPreview.Text = $"プレビューエラー: {ex.Message}";
+        }
+    }
+
+    #endregion
+
+    #region バージョンチェック機能
+
+    /// <summary>
+    /// バックグラウンドでバージョンチェックを開始
+    /// </summary>
+    private async void StartVersionCheckAsync()
+    {
+        try
+        {
+            await VersionChecker.StartPeriodicVersionCheckAsync((versionInfo) =>
+            {
+                // UIスレッドで実行
+                this.Invoke(() =>
+                {
+                    Logger.Info($"新しいバージョンが利用可能です: {versionInfo.Version}");
+                    VersionChecker.ShowUpdateDialog(versionInfo, this);
+                });
+            });
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("バックグラウンドバージョンチェックでエラーが発生", ex);
         }
     }
 
@@ -698,32 +806,43 @@ public partial class MainForm : Form
             return;
 
         var taskName = textBoxTaskName.Text.Trim();
+        Logger.Info($"タスク作成開始: {taskName}");
         
-        // 古いBATファイルをクリーンアップ
-        CleanupOldBatFiles(taskName);
-        
-        // BATファイル名の生成（仕様書4.3.3）
-        var batFileName = $"{taskName}_{DateTime.Now:yyyyMMddHHmmss}.bat";
-        var batFilePath = Path.Combine(_batFolderPath, batFileName);
+        try
+        {
+            // 古いBATファイルをクリーンアップ
+            CleanupOldBatFiles(taskName);
+            
+            // BATファイル名の生成（仕様書4.3.3）
+            var batFileName = $"{taskName}_{DateTime.Now:yyyyMMddHHmmss}.bat";
+            var batFilePath = Path.Combine(_batFolderPath, batFileName);
 
-        // BATファイルの内容を生成
-        var batContent = GenerateBatContent();
+            // BATファイルの内容を生成
+            var batContent = GenerateBatContent();
 
-        // BATファイルを作成 (UTF-8 without BOM for better Windows BAT compatibility)
-        var encoding = new UTF8Encoding(false); // BOMなし
-        await File.WriteAllTextAsync(batFilePath, batContent, encoding);
+            // BATファイルを作成 (UTF-8 without BOM for better Windows BAT compatibility)
+            var encoding = new UTF8Encoding(false); // BOMなし
+            await File.WriteAllTextAsync(batFilePath, batContent, encoding);
+            Logger.Info($"BATファイル作成完了: {batFilePath}");
 
-        // 設定ファイルを保存（編集機能用）
-        await SaveTaskSettings(taskName);
+            // 設定ファイルを保存（編集機能用）
+            await SaveTaskSettings(taskName);
 
-        // タスクスケジューラーに登録
-        CreateScheduledTask(taskName, batFilePath);
+            // タスクスケジューラーに登録
+            CreateScheduledTask(taskName, batFilePath);
+            Logger.TaskExecution(taskName, "作成", true, $"BATファイル: {batFilePath}");
 
-        MessageBox.Show($"タスク '{taskName}' が正常に作成されました。\nBATファイル: {batFilePath}", 
-            "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show($"タスク '{taskName}' が正常に作成されました。\nBATファイル: {batFilePath}", 
+                "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-        // タスク一覧を更新
-        LoadExistingTasks();
+            // タスク一覧を更新
+            LoadExistingTasks();
+        }
+        catch (Exception ex)
+        {
+            Logger.TaskExecution(taskName, "作成", false, ex.Message);
+            throw; // 呼び出し元で処理
+        }
     }
 
     /// <summary>
@@ -738,7 +857,7 @@ public partial class MainForm : Form
         batContent.AppendLine("chcp 65001 > nul"); // UTF-8コードページに設定
         batContent.AppendLine("setlocal");
         batContent.AppendLine("");
-        batContent.AppendLine("echo TaskCrony v1.1.0 自動実行開始: %date% %time%");
+        batContent.AppendLine("echo TaskCrony v1.2.0 自動実行開始: %date% %time%");
         batContent.AppendLine("");
 
         // 日付オフセットを適用した日付文字列を動的に生成（BOM問題回避のためfor /f使用）
@@ -780,7 +899,7 @@ public partial class MainForm : Form
             GenerateFileCopyBat(batContent);
         }
 
-        batContent.AppendLine("echo TaskCrony v1.1.0 自動実行完了: %date% %time%");
+        batContent.AppendLine("echo TaskCrony v1.2.0 自動実行完了: %date% %time%");
         batContent.AppendLine("endlocal");
 
         return batContent.ToString();
@@ -932,7 +1051,7 @@ public partial class MainForm : Form
 
         // 新しいタスクを作成
         var taskDefinition = taskService.NewTask();
-        taskDefinition.RegistrationInfo.Description = $"TaskCrony v1.1.0 で作成されたタスク: {taskName}";
+        taskDefinition.RegistrationInfo.Description = $"TaskCrony v1.2.0 で作成されたタスク: {taskName}";
         taskDefinition.Principal.LogonType = TaskLogonType.InteractiveToken;
 
         // トリガーの設定
@@ -1077,6 +1196,8 @@ public partial class MainForm : Form
     {
         try
         {
+            Logger.Info($"タスク削除開始: {taskName}");
+            
             using var taskService = new TaskService();
             taskService.RootFolder.DeleteTask(taskName);
             
@@ -1086,6 +1207,7 @@ public partial class MainForm : Form
             // 関連するJSONファイルを削除
             CleanupTaskJsonFiles(taskName);
             
+            Logger.TaskExecution(taskName, "削除", true);
             MessageBox.Show($"タスク '{taskName}' を削除しました。", "成功", 
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
             
@@ -1093,6 +1215,7 @@ public partial class MainForm : Form
         }
         catch (Exception ex)
         {
+            Logger.TaskExecution(taskName, "削除", false, ex.Message);
             MessageBox.Show($"タスクの削除に失敗しました:\n{ex.Message}", "エラー", 
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
