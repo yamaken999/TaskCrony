@@ -709,8 +709,8 @@ public partial class MainForm : Form
         // BATファイルの内容を生成
         var batContent = GenerateBatContent();
 
-        // BATファイルを作成 (UTF-8 with BOM for Windows compatibility)
-        var encoding = new UTF8Encoding(true);
+        // BATファイルを作成 (UTF-8 without BOM for better Windows BAT compatibility)
+        var encoding = new UTF8Encoding(false); // BOMなし
         await File.WriteAllTextAsync(batFilePath, batContent, encoding);
 
         // 設定ファイルを保存（編集機能用）
@@ -741,19 +741,17 @@ public partial class MainForm : Form
         batContent.AppendLine("echo TaskCrony v1.1.0 自動実行開始: %date% %time%");
         batContent.AppendLine("");
 
-        // 日付オフセットを適用した日付文字列を動的に生成
+        // 日付オフセットを適用した日付文字列を動的に生成（BOM問題回避のためfor /f使用）
         var dateOffset = (int)numericUpDownDateOffset.Value;
-        batContent.AppendLine("rem 日付オフセットの計算");
+        batContent.AppendLine("rem 日付オフセットの計算（PowerShellから直接取得）");
         if (dateOffset != 0)
         {
-            batContent.AppendLine($"powershell -command \"$date = (Get-Date).AddDays({dateOffset}); $date.ToString('yyyyMMdd')\" > temp_date.txt");
+            batContent.AppendLine($"for /f %%A in ('powershell -nologo -command \"(Get-Date).AddDays({dateOffset}).ToString(\\\"yyyyMMdd\\\")\"') do set DATE_STRING=%%A");
         }
         else
         {
-            batContent.AppendLine("powershell -command \"(Get-Date).ToString('yyyyMMdd')\" > temp_date.txt");
+            batContent.AppendLine("for /f %%A in ('powershell -nologo -command \"(Get-Date).ToString(\\\"yyyyMMdd\\\")\"') do set DATE_STRING=%%A");
         }
-        batContent.AppendLine("set /p DATE_STRING=<temp_date.txt");
-        batContent.AppendLine("del temp_date.txt");
         batContent.AppendLine("");
 
         // 設定値をBATファイルに記録（編集機能用）
@@ -797,42 +795,44 @@ public partial class MainForm : Form
         batContent.AppendLine("goto :main");
         batContent.AppendLine("");
         batContent.AppendLine(":build_filename");
-        batContent.AppendLine("set BASE_NAME=%1");
-        batContent.AppendLine("set PREFIX=%2");
-        batContent.AppendLine("set SUFFIX=%3");
-        batContent.AppendLine("set PREFIX_DATE_POS=%4");
-        batContent.AppendLine("set SUFFIX_DATE_POS=%5");
+        batContent.AppendLine("set BASE_NAME=%~1");
+        batContent.AppendLine("set PREFIX=%~2");
+        batContent.AppendLine("set SUFFIX=%~3");
+        batContent.AppendLine("set PREFIX_DATE_POS=%~4");
+        batContent.AppendLine("set SUFFIX_DATE_POS=%~5");
         batContent.AppendLine("");
         batContent.AppendLine("set RESULT=%BASE_NAME%");
         batContent.AppendLine("");
         
         // 接頭語処理
-        batContent.AppendLine("if not \"%PREFIX%\"==\"\" (");
-        batContent.AppendLine("    if \"%PREFIX_DATE_POS%\"==\"before\" (");
-        batContent.AppendLine("        set RESULT=%DATE_STRING%%PREFIX%%RESULT%");
-        batContent.AppendLine("    ) else if \"%PREFIX_DATE_POS%\"==\"after\" (");
-        batContent.AppendLine("        set RESULT=%PREFIX%%DATE_STRING%%RESULT%");
-        batContent.AppendLine("    ) else (");
-        batContent.AppendLine("        set RESULT=%PREFIX%%RESULT%");
+        batContent.AppendLine("rem 接頭語の処理");
+        batContent.AppendLine("if defined PREFIX (");
+        batContent.AppendLine("    if /I \"%PREFIX_DATE_POS%\"==\"before\" (");
+        batContent.AppendLine("        set RESULT=%DATE_STRING%%PREFIX%_%RESULT%");
+        batContent.AppendLine("    ) else if /I \"%PREFIX_DATE_POS%\"==\"after\" (");
+        batContent.AppendLine("        set RESULT=%PREFIX%_%DATE_STRING%_%RESULT%");
+        batContent.AppendLine("    ) else if /I not \"%PREFIX_DATE_POS%\"==\"none\" (");
+        batContent.AppendLine("        set RESULT=%PREFIX%_%RESULT%");
         batContent.AppendLine("    )");
         batContent.AppendLine(") else (");
-        batContent.AppendLine("    if \"%PREFIX_DATE_POS%\"==\"before\" set RESULT=%DATE_STRING%%RESULT%");
-        batContent.AppendLine("    if \"%PREFIX_DATE_POS%\"==\"after\" set RESULT=%DATE_STRING%%RESULT%");
+        batContent.AppendLine("    if /I \"%PREFIX_DATE_POS%\"==\"before\" set RESULT=%DATE_STRING%_%RESULT%");
+        batContent.AppendLine("    if /I \"%PREFIX_DATE_POS%\"==\"after\" set RESULT=%DATE_STRING%_%RESULT%");
         batContent.AppendLine(")");
         batContent.AppendLine("");
         
         // 接尾語処理
-        batContent.AppendLine("if not \"%SUFFIX%\"==\"\" (");
-        batContent.AppendLine("    if \"%SUFFIX_DATE_POS%\"==\"before\" (");
-        batContent.AppendLine("        set RESULT=%RESULT%%DATE_STRING%%SUFFIX%");
-        batContent.AppendLine("    ) else if \"%SUFFIX_DATE_POS%\"==\"after\" (");
-        batContent.AppendLine("        set RESULT=%RESULT%%SUFFIX%%DATE_STRING%");
-        batContent.AppendLine("    ) else (");
-        batContent.AppendLine("        set RESULT=%RESULT%%SUFFIX%");
+        batContent.AppendLine("rem 接尾語の処理");
+        batContent.AppendLine("if defined SUFFIX (");
+        batContent.AppendLine("    if /I \"%SUFFIX_DATE_POS%\"==\"before\" (");
+        batContent.AppendLine("        set RESULT=%RESULT%_%DATE_STRING%%SUFFIX%");
+        batContent.AppendLine("    ) else if /I \"%SUFFIX_DATE_POS%\"==\"after\" (");
+        batContent.AppendLine("        set RESULT=%RESULT%_%SUFFIX%_%DATE_STRING%");
+        batContent.AppendLine("    ) else if /I not \"%SUFFIX_DATE_POS%\"==\"none\" (");
+        batContent.AppendLine("        set RESULT=%RESULT%_%SUFFIX%");
         batContent.AppendLine("    )");
         batContent.AppendLine(") else (");
-        batContent.AppendLine("    if \"%SUFFIX_DATE_POS%\"==\"before\" set RESULT=%RESULT%%DATE_STRING%");
-        batContent.AppendLine("    if \"%SUFFIX_DATE_POS%\"==\"after\" set RESULT=%RESULT%%DATE_STRING%");
+        batContent.AppendLine("    if /I \"%SUFFIX_DATE_POS%\"==\"before\" set RESULT=%RESULT%_%DATE_STRING%");
+        batContent.AppendLine("    if /I \"%SUFFIX_DATE_POS%\"==\"after\" set RESULT=%RESULT%_%DATE_STRING%");
         batContent.AppendLine(")");
         batContent.AppendLine("");
         batContent.AppendLine("goto :eof");
