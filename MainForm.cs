@@ -510,6 +510,7 @@ public partial class MainForm : Form
 
     /// <summary>
     /// ファイル名・フォルダ名を構築（仕様書4.1.3準拠）
+    /// 接頭語・接尾語が空欄でも日付ラジオボタンが選択されている場合は日付のみ付与
     /// </summary>
     internal string BuildFileNameWithSettings(string baseName, string dateString, string prefix, string suffix, 
         bool prefixDateBefore, bool prefixDateAfter, bool prefixDateNone, 
@@ -520,6 +521,7 @@ public partial class MainForm : Form
         // 接頭語の処理
         if (!string.IsNullOrWhiteSpace(prefix))
         {
+            // 接頭語が入力されている場合
             if (prefixDateBefore)
             {
                 result = dateString + prefix + "_" + result;
@@ -528,7 +530,7 @@ public partial class MainForm : Form
             {
                 result = prefix + dateString + "_" + result;
             }
-            else
+            else if (!prefixDateNone)  // "なし"以外の場合（日付位置指定なし）
             {
                 result = prefix + "_" + result;
             }
@@ -545,6 +547,7 @@ public partial class MainForm : Form
         // 接尾語の処理
         if (!string.IsNullOrWhiteSpace(suffix))
         {
+            // 接尾語が入力されている場合
             if (suffixDateBefore)
             {
                 result = result + "_" + dateString + suffix;
@@ -553,7 +556,7 @@ public partial class MainForm : Form
             {
                 result = result + "_" + suffix + dateString;
             }
-            else
+            else if (!suffixDateNone)  // "なし"以外の場合（日付位置指定なし）
             {
                 result = result + "_" + suffix;
             }
