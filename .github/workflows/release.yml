@@ -1,0 +1,137 @@
+name: Auto Release
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - '**.cs'
+      - '**.csproj'
+      - 'README.md'
+      - 'LICENSE.txt'
+
+jobs:
+  release:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+      
+    - name: Publish
+      run: dotnet publish --configuration Release --output ./publish --self-contained true --runtime win-x64 --verbosity normal
+      
+    - name: Get version from csproj
+      id: get_version
+      run: |
+        $csproj = Get-Content TaskCrony.csproj
+        $version = ($csproj | Select-String -Pattern '<Version>(.*)</Version>').Matches[0].Groups[1].Value
+        if ([string]::IsNullOrEmpty($version)) {
+          $version = ($csproj | Select-String -Pattern '<AssemblyVersion>(.*)</AssemblyVersion>').Matches[0].Groups[1].Value
+        }
+        if ([string]::IsNullOrEmpty($version)) {
+          $version = "1.1.0"
+        }
+        echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+        echo "タグ名: v$version"
+      shell: pwsh
+      
+    - name: Create ZIP package
+      run: |
+        cd publish
+        Compress-Archive -Path * -DestinationPath ../TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip
+        cd ..
+        echo "パッケージ作成完了: TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip"
+      shell: pwsh
+      
+    - name: Check if tag exists
+      id: check_tag
+      run: |
+        $tagExists = git tag -l "v${{ steps.get_version.outputs.VERSION }}"
+        if ($tagExists) {
+          echo "TAG_EXISTS=true" >> $env:GITHUB_OUTPUT
+          echo "タグ v${{ steps.get_version.outputs.VERSION }} は既に存在します"
+        } else {
+          echo "TAG_EXISTS=false" >> $env:GITHUB_OUTPUT
+          echo "新しいタグ v${{ steps.get_version.outputs.VERSION }} を作成します"
+        }
+      shell: pwsh
+      
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        $releaseNotes = @"
+        ## TaskCrony v${{ steps.get_version.outputs.VERSION }}
+        
+        ### 🚀 新機能・改善
+        - .NET 8.0 Windows Forms アプリケーション
+        - Windows タスクスケジューラー統合
+        - 日付ベースのファイル・フォルダ自動作成
+        - BATファイル自動生成とエンコーディング最適化
+        - 複数ファイル対応とリアルタイムプレビュー
+        
+        ### 📦 配布ファイル
+        - **TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip**: 自己完結型実行可能ファイル (約146MB)
+        - セットアップガイドとREADME.md含む
+        
+        ### 🔧 技術仕様
+        - 対象: Windows 10/11 (.NET 8.0)
+        - PowerShell連携による日付計算
+        - UTF-8エンコーディング（BOM問題対応済み）
+        - JSON設定ファイル管理
+        
+        ### 📝 使用方法
+        1. ZIPファイルをダウンロード・展開
+        2. TaskCrony.exeを実行
+        3. タスク設定を入力して作成
+        4. Windows タスクスケジューラーで自動実行
+        
+        ビルド日時: $(Get-Date -Format "yyyy年MM月dd日 HH:mm") JST
+        "@
+        
+        # GitHub用にエスケープ
+        $releaseNotes = $releaseNotes -replace "`r`n", "`n"
+        echo "RELEASE_NOTES<<EOF" >> $env:GITHUB_OUTPUT
+        echo $releaseNotes >> $env:GITHUB_OUTPUT
+        echo "EOF" >> $env:GITHUB_OUTPUT
+      shell: pwsh
+      
+    - name: Create Release
+      if: steps.check_tag.outputs.TAG_EXISTS == 'false'
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.get_version.outputs.VERSION }}
+        release_name: TaskCrony v${{ steps.get_version.outputs.VERSION }}
+        body: ${{ steps.release_notes.outputs.RELEASE_NOTES }}
+        draft: false
+        prerelease: false
+        
+    - name: Upload Release Asset
+      if: steps.check_tag.outputs.TAG_EXISTS == 'false'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip
+        asset_name: TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip
+        asset_content_type: application/zip
+        
+    - name: Update existing release (if tag exists)
+      if: steps.check_tag.outputs.TAG_EXISTS == 'true'
+      run: |
+        echo "既存のタグが存在するため、リリースをスキップしました。"
+        echo "新しいリリースを作成する場合は、プロジェクトファイルのバージョンを更新してください。"
+      shell: pwsh
