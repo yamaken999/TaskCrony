@@ -7,7 +7,21 @@ on:
       - '**.cs'
       - '**.csproj'
       - 'README.md'
-      - 'LICENSE.txt'
+           # パッケージ内容の確認
+        $rootFiles = Get-ChildItem $releaseDir -File | Measure-Object | Select-Object -ExpandProperty Count
+        
+        echo "📦 確実起動版パッケージ作成完了:"
+        echo "   TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip"
+        echo ""
+        echo "✅ フォルダ構成 (DLL整理なし):"
+        echo "   📱 全ファイル: $rootFiles 個 (ローカルビルドと同じ構成)"
+        echo "   📁 docs/ (ドキュメント)"
+        echo "   📁 使用方法.txt (詳細説明)"
+        echo ""
+        echo "🔧 技術詳細:"
+        echo "   - .NET 8.0 自己完結型配布"
+        echo "   - 全ファイルルート配置で確実起動"
+        echo "   - SSL/TLS問題の対応済み"'
       - '.github/workflows/**'
 
 permissions:
@@ -52,87 +66,25 @@ jobs:
       
     - name: Organize and Create ZIP package
       run: |
-        # === 整理されたフォルダ構造を作成 ===
+        # === リリースフォルダを作成（DLL整理なし） ===
         $releaseDir = "TaskCrony_Release"
         if (Test-Path $releaseDir) { Remove-Item $releaseDir -Recurse -Force }
         New-Item -ItemType Directory -Path $releaseDir
-        New-Item -ItemType Directory -Path "$releaseDir\libs"
         New-Item -ItemType Directory -Path "$releaseDir\docs"
         
         cd publish
         
-        # メインの実行ファイルとランタイム設定を最上位に配置
-        Copy-Item "TaskCrony.exe" "../$releaseDir/" -Force
-        Copy-Item "TaskCrony.deps.json" "../$releaseDir/" -Force
-        Copy-Item "TaskCrony.runtimeconfig.json" "../$releaseDir/" -Force
+        # publishフォルダの全内容をそのままコピー（整理なし）
+        Write-Host "publishフォルダの全内容をコピー中..."
+        Copy-Item * "../$releaseDir/" -Recurse -Force
         
-        # 重要なDLLは最上位に（アプリケーションと同じ場所に必要）
-        Copy-Item "Microsoft.Win32.TaskScheduler.dll" "../$releaseDir/" -Force
-        
-        # .NET Core関連の重要なDLLを最上位に保持（ローカル検証済み）
-        $criticalDlls = @(
-            "TaskCrony.dll",
-            "hostfxr.dll",
-            "hostpolicy.dll", 
-            "coreclr.dll",
-            "clrjit.dll",
-            "System.Private.CoreLib.dll"
-        )
-        
-        foreach ($dll in $criticalDlls) {
-            if (Test-Path $dll) {
-                Copy-Item $dll "../$releaseDir/" -Force
-                Write-Host "重要DLLをルートにコピー: $dll"
-            }
+        # 言語フォルダもそのままコピー
+        Get-ChildItem -Directory | ForEach-Object {
+            Copy-Item $_.FullName "../$releaseDir/" -Recurse -Force
+            Write-Host "言語フォルダコピー: $($_.Name)"
         }
-        
-        # すべてのSystem.*とMicrosoft.*のDLLをルートに保持（起動エラー修正）
-        Get-ChildItem -Filter "*.dll" | Where-Object { 
-          ($_.Name -like "System.*" -or $_.Name -like "Microsoft.*") -and
-          $_.Name -ne "Microsoft.Win32.TaskScheduler.dll" -and 
-          $_.Name -notin $criticalDlls
-        } | ForEach-Object {
-            Copy-Item $_.FullName "../$releaseDir/" -Force
-            Write-Host "System/Microsoft DLLをルートにコピー: $($_.Name)"
-        }
-        
-        # その他のDLL（ネイティブライブラリなど）のみlibsフォルダに
-        Get-ChildItem -Filter "*.dll" | Where-Object { 
-          $_.Name -notlike "System.*" -and 
-          $_.Name -notlike "Microsoft.*" -and 
-          $_.Name -notin $criticalDlls -and
-          $_.Name -ne "TaskCrony.dll"
-        } | ForEach-Object {
-            Copy-Item $_.FullName "../$releaseDir/libs/" -Force
-            Write-Host "Libsフォルダに移動: $($_.Name)"
-        }
-        
-        # PDBファイルはlibsフォルダに
-        Copy-Item "TaskCrony.pdb" "../$releaseDir/libs/" -Force
-        
-        # その他のランタイムファイル
-        Get-ChildItem -Filter "*.exe" | Where-Object { 
-          $_.Name -ne "TaskCrony.exe" 
-        } | Copy-Item -Destination "../$releaseDir/libs/" -Force
-        
-        # 言語フォルダをlibsに移動
-        Get-ChildItem -Directory | Copy-Item -Destination "../$releaseDir/libs/" -Recurse -Force
         
         cd ..
-        
-        # ランタイム設定にlibsプロービングパスを追加（ローカル検証済み）
-        $runtimeConfigPath = "$releaseDir/TaskCrony.runtimeconfig.json"
-        if (Test-Path $runtimeConfigPath) {
-            $config = Get-Content $runtimeConfigPath | ConvertFrom-Json
-            
-            # additionalProbingPathsを追加
-            if (-not $config.runtimeOptions.additionalProbingPaths) {
-                $config.runtimeOptions | Add-Member -NotePropertyName "additionalProbingPaths" -NotePropertyValue @("./libs")
-                Write-Host "ランタイム設定にlibsプロービングパスを追加"
-            }
-            
-            $config | ConvertTo-Json -Depth 10 | Set-Content $runtimeConfigPath
-        }
         
         # READMEとセットアップガイドをdocsフォルダにコピー
         if (Test-Path "README.md") { Copy-Item "README.md" "$releaseDir/docs/" -Force }
@@ -145,28 +97,28 @@ jobs:
         【起動方法】
         TaskCrony.exe をダブルクリックしてください
 
-        【フォルダ構成】（ローカル検証済み）
+        【フォルダ構成】（DLL整理なし・確実起動版）
         ├── TaskCrony.exe                   - メインアプリケーション
         ├── TaskCrony.deps.json            - アプリケーション依存関係設定
-        ├── TaskCrony.runtimeconfig.json   - ランタイム設定（libsプロービング対応）
+        ├── TaskCrony.runtimeconfig.json   - ランタイム設定
         ├── Microsoft.Win32.TaskScheduler.dll - タスクスケジューラーライブラリ
-        ├── hostfxr.dll, hostpolicy.dll    - .NETランタイムホスト（重要）
-        ├── coreclr.dll, clrjit.dll         - .NETコアランタイム（重要）
-        ├── System.Private.CoreLib.dll     - .NET基本ライブラリ（重要）
-        ├── libs/                           - .NETランタイムライブラリ（約233個）
-        ├── docs/                           - ドキュメント類
-        └── BAT/                            - 生成されるBATファイル保存先（自動作成）
+        ├── System.*.dll                   - .NETシステムライブラリ（全て）
+        ├── Microsoft.*.dll                 - Microsoftライブラリ（全て）
+        ├── その他.dll                      - 全ての依存DLLファイル
+        ├── 言語フォルダ/                   - 多言語リソース
+        ├── docs/                          - ドキュメント類
+        └── BAT/                           - 生成されるBATファイル保存先（自動作成）
 
         【特徴】
         - 自己完結型（.NETランタイム不要）
-        - DLL整理により見つけやすいパッケージ構造
-        - 重要ファイルのみルートに配置、その他はlibsフォルダに整理
-        - 自動プロービングパス設定でDLLロード問題を解決
+        - 全ファイルをルートに配置で確実起動
+        - DLL整理なしで依存関係エラーを回避
+        - ローカルビルドと同じ構成
         - ファイルサイズ: 約146MB（全ランタイム込み）
 
         【重要な注意事項】
-        - TaskCrony.exe と同じフォルダの重要DLLは移動しないでください
-        - libsフォルダ内のファイルはすべて必要（削除しないでください）
+        - TaskCrony.exe と同じフォルダの全ファイルが必要です
+        - ファイルは移動・削除しないでください（全て必要）
         - 初回起動時にBATフォルダが自動作成されます
         - SSL/TLS証明書エラーが出る場合は、システム時刻を確認してください
 
@@ -179,13 +131,13 @@ jobs:
         【トラブルシューティング】
         - アプリが起動しない → Logs/フォルダのログファイルを確認
         - SSL接続エラー → ネットワーク設定またはファイアウォールを確認
-        - DLLが見つからない → libsフォルダとruntimeconfig.jsonを確認
+        - ファイルが見つからない → 全ファイルが同じフォルダにあることを確認
 
         【新機能（v${{ steps.get_version.outputs.VERSION }}）】
         - ログ機能とリアルタイムログビューアー
         - GitHub API統合による自動バージョンチェック
         - 包括的なエラーハンドリングとロギング
-        - DLL整理による見つけやすいパッケージ構造（実証済み）
+        - 確実起動を優先したパッケージ構成
 
         【サポート】
         - GitHub: https://github.com/yamaken999/TaskCrony
