@@ -398,6 +398,9 @@ BAT/
 
 # Temporary files and folders
 temp/
+
+# TaskCrony test build outputs
+TaskCrony_Release/
 tmp/
 Temp/
 Tmp/

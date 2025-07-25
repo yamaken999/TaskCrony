@@ -4,12 +4,12 @@ using System.Text.Json;
 namespace TaskCrony;
 
 /// <summary>
-/// TaskCrony バージョンチェッククラス v1.2.0
+/// TaskCrony バージョンチェッククラス v1.3.0
 /// </summary>
 public static class VersionChecker
 {
     private const string GITHUB_API_URL = "https://api.github.com/repos/yamaken999/TaskCrony/releases/latest";
-    private const string CURRENT_VERSION = "1.2.0";
+    private const string CURRENT_VERSION = "1.3.0";
     
     /// <summary>
     /// バージョン情報
