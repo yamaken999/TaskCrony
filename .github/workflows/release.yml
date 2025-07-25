@@ -7,7 +7,11 @@ on:
       - '**.cs'
       - '**.csproj'
       - 'README.md'
-      - 'LICENSE.txt'
+      - 'LIC        echo "✅ フォルダ構成:"
+        echo "   � TaskCrony.exe (メインアプリ)"
+        echo "   📁 Microsoft.Win32.TaskScheduler.dll (タスクスケジューラー)"
+        echo "   📁 TaskCrony.deps.json & .runtimeconfig.json (ランタイム設定)"
+        echo "   📁 libs/ (.NETランタイム)"txt'
 
 permissions:
   contents: write
@@ -61,12 +65,14 @@ jobs:
         
         cd publish
         
-        # メインの実行ファイルを最上位に配置
+        # メインの実行ファイルとランタイム設定を最上位に配置
         Copy-Item "TaskCrony.exe" "../$releaseDir/" -Force
+        Copy-Item "TaskCrony.deps.json" "../$releaseDir/" -Force
+        Copy-Item "TaskCrony.runtimeconfig.json" "../$releaseDir/" -Force
+        
+        # アプリケーション関連ファイルをlibsフォルダに
         Copy-Item "TaskCrony.dll" "../$releaseDir/libs/" -Force
         Copy-Item "TaskCrony.pdb" "../$releaseDir/libs/" -Force
-        Copy-Item "TaskCrony.deps.json" "../$releaseDir/libs/" -Force
-        Copy-Item "TaskCrony.runtimeconfig.json" "../$releaseDir/libs/" -Force
         
         # 重要なDLLは最上位に（アプリケーションと同じ場所に必要）
         Copy-Item "Microsoft.Win32.TaskScheduler.dll" "../$releaseDir/" -Force
@@ -91,26 +97,18 @@ jobs:
         if (Test-Path "README.md") { Copy-Item "README.md" "$releaseDir/docs/" -Force }
         if (Test-Path "LICENSE.txt") { Copy-Item "LICENSE.txt" "$releaseDir/docs/" -Force }
         
-        # スタートアップバッチファイルを作成
-        @"
-        @echo off
-        cd /d "%~dp0"
-        echo TaskCrony を起動しています...
-        TaskCrony.exe
-        "@ | Out-File -FilePath "$releaseDir/TaskCrony起動.bat" -Encoding utf8
-        
         # 使用方法テキストファイルを作成
         @"
         ■ TaskCrony v${{ steps.get_version.outputs.VERSION }} 使用方法
 
         【起動方法】
-        1. TaskCrony.exe をダブルクリック
-        2. または TaskCrony起動.bat をダブルクリック
+        TaskCrony.exe をダブルクリックしてください
 
         【フォルダ構成】
         TaskCrony.exe                   - メインアプリケーション
+        TaskCrony.deps.json            - アプリケーション依存関係設定
+        TaskCrony.runtimeconfig.json   - ランタイム設定
         Microsoft.Win32.TaskScheduler.dll - タスクスケジューラーライブラリ（重要）
-        TaskCrony起動.bat               - 起動用バッチファイル  
         libs/                           - .NETランタイムライブラリ
         docs/                           - ドキュメント類
         BAT/                            - 生成されるBATファイル保存先（自動作成）
