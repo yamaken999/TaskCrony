@@ -258,3 +258,6 @@ copy "%SOURCE%" "%DESTINATION%\%FOLDER_NAME%\%FILE_NAME%"
 ---
 
 **TaskCrony v0.1.0** - より効率的なファイル管理をあなたに
+ 
+ < ! - -   v 1 . 2 . 0   �0�0�0�0�0�0�_CQ�0�0�0  - - >  
+ 
