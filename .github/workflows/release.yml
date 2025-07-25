@@ -86,10 +86,22 @@ jobs:
             }
         }
         
-        # その他の.NET Runtime DLLをlibsフォルダに
+        # すべてのSystem.*とMicrosoft.*のDLLをルートに保持（起動エラー修正）
         Get-ChildItem -Filter "*.dll" | Where-Object { 
+          ($_.Name -like "System.*" -or $_.Name -like "Microsoft.*") -and
           $_.Name -ne "Microsoft.Win32.TaskScheduler.dll" -and 
           $_.Name -notin $criticalDlls
+        } | ForEach-Object {
+            Copy-Item $_.FullName "../$releaseDir/" -Force
+            Write-Host "System/Microsoft DLLをルートにコピー: $($_.Name)"
+        }
+        
+        # その他のDLL（ネイティブライブラリなど）のみlibsフォルダに
+        Get-ChildItem -Filter "*.dll" | Where-Object { 
+          $_.Name -notlike "System.*" -and 
+          $_.Name -notlike "Microsoft.*" -and 
+          $_.Name -notin $criticalDlls -and
+          $_.Name -ne "TaskCrony.dll"
         } | ForEach-Object {
             Copy-Item $_.FullName "../$releaseDir/libs/" -Force
             Write-Host "Libsフォルダに移動: $($_.Name)"
