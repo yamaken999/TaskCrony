@@ -161,19 +161,6 @@ jobs:
         echo "   - 詳細な使用手順付き"
       shell: pwsh
       
-    - name: Check if tag exists
-      id: check_tag
-      run: |
-        $tagExists = git tag -l "v${{ steps.get_version.outputs.VERSION }}"
-        if ($tagExists) {
-          echo "TAG_EXISTS=true" >> $env:GITHUB_OUTPUT
-          echo "タグ v${{ steps.get_version.outputs.VERSION }} は既に存在します"
-        } else {
-          echo "TAG_EXISTS=false" >> $env:GITHUB_OUTPUT
-          echo "新しいタグ v${{ steps.get_version.outputs.VERSION }} を作成します"
-        }
-      shell: pwsh
-      
     - name: Generate release notes
       id: release_notes
       run: |
@@ -195,7 +182,6 @@ jobs:
         - **libs/**: 実行に必要なライブラリファイル
         - **docs/**: README.md、ライセンス等
         - **使用方法.txt**: 詳細な使用手順
-        - **TaskCrony起動.bat**: 簡単起動バッチ
         
         ### 🔧 技術仕様
         - 対象: Windows 10/11 (.NET 8.0)
@@ -219,8 +205,19 @@ jobs:
         echo "EOF" >> $env:GITHUB_OUTPUT
       shell: pwsh
       
+    - name: Delete existing release if exists
+      run: |
+        # 既存のリリースを削除（エラーを無視）
+        gh release delete "v${{ steps.get_version.outputs.VERSION }}" --yes 2>$null || echo "No existing release to delete"
+        
+        # 既存のタグを削除（エラーを無視）
+        git tag -d "v${{ steps.get_version.outputs.VERSION }}" 2>$null || echo "No existing local tag to delete"
+        git push origin --delete "v${{ steps.get_version.outputs.VERSION }}" 2>$null || echo "No existing remote tag to delete"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      shell: pwsh
+      
     - name: Create Release
-      if: steps.check_tag.outputs.TAG_EXISTS == 'false'
       run: |
         gh release create "v${{ steps.get_version.outputs.VERSION }}" `
           --title "TaskCrony v${{ steps.get_version.outputs.VERSION }}" `
@@ -228,11 +225,4 @@ jobs:
           "./TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip#TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      shell: pwsh
-        
-    - name: Update existing release (if tag exists)
-      if: steps.check_tag.outputs.TAG_EXISTS == 'true'
-      run: |
-        echo "既存のタグが存在するため、リリースをスキップしました。"
-        echo "新しいリリースを作成する場合は、プロジェクトファイルのバージョンを更新してください。"
       shell: pwsh
