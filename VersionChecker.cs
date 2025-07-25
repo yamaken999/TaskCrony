@@ -5,6 +5,7 @@ namespace TaskCrony;
 
 /// <summary>
 /// TaskCrony バージョンチェッククラス v1.3.0
+/// GitHub Actions ビルドテスト用コメント追加
 /// </summary>
 public static class VersionChecker
 {
