@@ -7,7 +7,10 @@ on:
       - '**.cs'
       - '**.csproj'
       - 'README.md'
-           # パッケージ内容の確認
+        # ZIPファイルを作成
+        Compress-Archive -Path $releaseDir -DestinationPath "TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip" -Force
+        
+        # パッケージ内容の確認
         $rootFiles = Get-ChildItem $releaseDir -File | Measure-Object | Select-Object -ExpandProperty Count
         
         echo "📦 確実起動版パッケージ作成完了:"
@@ -183,9 +186,9 @@ jobs:
         - BATファイル自動生成とエンコーディング最適化
         - 複数ファイル対応とリアルタイムプレビュー
         
-        ### 📦 配布ファイル（整理済み）
+        ### 📦 配布ファイル（確実起動版）
         - **TaskCrony.exe**: メインアプリケーション
-        - **libs/**: 実行に必要なライブラリファイル
+        - **全DLLファイル**: 実行に必要な全ライブラリ
         - **docs/**: README.md、ライセンス等
         - **使用方法.txt**: 詳細な使用手順
         
