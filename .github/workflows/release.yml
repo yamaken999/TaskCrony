@@ -11,7 +11,9 @@ on:
         echo "   � TaskCrony.exe (メインアプリ)"
         echo "   📁 Microsoft.Win32.TaskScheduler.dll (タスクスケジューラー)"
         echo "   📁 TaskCrony.deps.json & .runtimeconfig.json (ランタイム設定)"
-        echo "   📁 libs/ (.NETランタイム)"txt'
+        echo "   📁 libs/ (.NETランタイム)"
+        echo "   📁 docs/ (ドキュメント)"
+        echo "   📁 使用方法.txt (詳細説明)"t'
 
 permissions:
   contents: write
