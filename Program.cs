@@ -1,6 +1,5 @@
 using System.Text;
 using System.Reflection;
-using System.Runtime.Loader;
 
 namespace TaskCrony;
 
@@ -15,45 +14,59 @@ static class Program
     [STAThread]
     static void Main()
     {
-        // libsフォルダからのDLL読み込みを設定
-        AssemblyLoadContext.Default.Resolving += OnResolving;
-        
-        // Shift_JISエンコーディングサポートを有効化（仕様書4.3.1準拠）
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-        
-        // アプリケーション設定の初期化
-        ApplicationConfiguration.Initialize();
-        
-        // メインフォームを実行
-        Application.Run(new MainForm());
+        try
+        {
+            // libsフォルダからのDLL読み込みを設定
+            AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
+            
+            // Shift_JISエンコーディングサポートを有効化（仕様書4.3.1準拠）
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            
+            // アプリケーション設定の初期化
+            ApplicationConfiguration.Initialize();
+            
+            // メインフォームを実行
+            Application.Run(new MainForm());
+        }
+        catch (Exception ex)
+        {
+            // 起動時エラーをユーザーに表示
+            MessageBox.Show($"アプリケーションの起動中にエラーが発生しました:\n\n{ex.Message}\n\nスタックトレース:\n{ex.StackTrace}", 
+                "TaskCrony 起動エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
     
     /// <summary>
     /// アセンブリ解決イベントハンドラ - libsフォルダからDLLを読み込み
     /// </summary>
-    private static Assembly? OnResolving(AssemblyLoadContext context, AssemblyName assemblyName)
+    private static Assembly? OnAssemblyResolve(object? sender, ResolveEventArgs args)
     {
         try
         {
-            // まず標準の場所から読み込みを試行
-            var exeDir = AppDomain.CurrentDomain.BaseDirectory;
-            var assemblyPath = Path.Combine(exeDir, assemblyName.Name + ".dll");
+            var assemblyName = new AssemblyName(args.Name);
+            var dllName = assemblyName.Name + ".dll";
             
+            // 実行ファイルのディレクトリを取得
+            var exeDir = AppDomain.CurrentDomain.BaseDirectory;
+            
+            // まず実行ファイルと同じディレクトリから読み込みを試行
+            var assemblyPath = Path.Combine(exeDir, dllName);
             if (File.Exists(assemblyPath))
             {
-                return context.LoadFromAssemblyPath(assemblyPath);
+                return Assembly.LoadFrom(assemblyPath);
             }
             
             // libsフォルダから読み込みを試行
-            var libsPath = Path.Combine(exeDir, "libs", assemblyName.Name + ".dll");
+            var libsPath = Path.Combine(exeDir, "libs", dllName);
             if (File.Exists(libsPath))
             {
-                return context.LoadFromAssemblyPath(libsPath);
+                return Assembly.LoadFrom(libsPath);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // 読み込み失敗時は標準の解決メカニズムに委譲
+            // デバッグ用：アセンブリ読み込みエラーをログに記録
+            System.Diagnostics.Debug.WriteLine($"Assembly resolve error: {ex.Message}");
         }
         
         return null;

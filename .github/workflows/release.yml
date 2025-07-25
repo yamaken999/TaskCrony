@@ -66,18 +66,30 @@ jobs:
         Copy-Item "TaskCrony.deps.json" "../$releaseDir/" -Force
         Copy-Item "TaskCrony.runtimeconfig.json" "../$releaseDir/" -Force
         
-        # アプリケーション関連ファイルをlibsフォルダに
-        Copy-Item "TaskCrony.dll" "../$releaseDir/libs/" -Force
-        Copy-Item "TaskCrony.pdb" "../$releaseDir/libs/" -Force
-        
         # 重要なDLLは最上位に（アプリケーションと同じ場所に必要）
         Copy-Item "Microsoft.Win32.TaskScheduler.dll" "../$releaseDir/" -Force
         
-        # .NET Runtime DLLをlibsフォルダに
+        # .NET Core関連の重要なDLLも最上位に保持
+        $criticalDlls = @(
+            "TaskCrony.dll",
+            "System.Text.Encoding.CodePages.dll"
+        )
+        
+        foreach ($dll in $criticalDlls) {
+            if (Test-Path $dll) {
+                Copy-Item $dll "../$releaseDir/" -Force
+            }
+        }
+        
+        # その他の.NET Runtime DLLをlibsフォルダに
         Get-ChildItem -Filter "*.dll" | Where-Object { 
           $_.Name -ne "Microsoft.Win32.TaskScheduler.dll" -and 
-          $_.Name -ne "TaskCrony.dll"
+          $_.Name -ne "TaskCrony.dll" -and
+          $_.Name -ne "System.Text.Encoding.CodePages.dll"
         } | Copy-Item -Destination "../$releaseDir/libs/" -Force
+        
+        # PDBファイルはlibsフォルダに
+        Copy-Item "TaskCrony.pdb" "../$releaseDir/libs/" -Force
         
         # その他のランタイムファイル
         Get-ChildItem -Filter "*.exe" | Where-Object { 
