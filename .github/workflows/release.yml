@@ -1,0 +1,109 @@
+name: Auto Release
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - '**.cs'
+      - '**.csproj'
+      - 'README.md'
+      - 'LICENSE.txt'
+
+permissions:
+  contents: write
+  
+jobs:
+  release:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+      
+    - name: Publish
+      run: dotnet publish --configuration Release --output ./publish --self-contained true --runtime win-x64 --verbosity normal
+      
+    - name: Get version from csproj
+      id: get_version
+      run: |
+        $csproj = Get-Content TaskCrony.csproj
+        $version = ($csproj | Select-String -Pattern '<Version>(.*)</Version>').Matches[0].Groups[1].Value
+        if ([string]::IsNullOrEmpty($version)) {
+          $version = ($csproj | Select-String -Pattern '<AssemblyVersion>(.*)</AssemblyVersion>').Matches[0].Groups[1].Value
+        }
+        if ([string]::IsNullOrEmpty($version)) {
+          $version = "1.3.0"
+        }
+        echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+        echo "検出されたバージョン: $version"
+      shell: pwsh
+      
+    - name: Create ZIP package
+      run: |
+        cd publish
+        Compress-Archive -Path * -DestinationPath ../TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip
+        cd ..
+        echo "パッケージ作成完了: TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip"
+      shell: pwsh
+      
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        $releaseNotes = @"
+        ## TaskCrony v${{ steps.get_version.outputs.VERSION }}
+        
+        ###  新機能改善
+        - ログ機能とバージョンチェック機能追加  
+        - 包括的なログ記録システム（7日間保持）
+        - GitHub API統合による自動バージョンチェック
+        - リアルタイムログビューアー
+        - Windows タスクスケジューラー統合
+        - 日付ベースのファイルフォルダ自動作成
+        - BATファイル自動生成とエンコーディング最適化
+        - 複数ファイル対応とリアルタイムプレビュー
+        
+        ###  配布ファイル
+        - **TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip**: 自己完結型実行可能ファイル (約146MB)
+        - 全ファイルをルートに配置で確実起動
+        
+        ###  技術仕様
+        - 対象: Windows 10/11 (.NET 8.0)
+        - PowerShell連携による日付計算
+        - UTF-8エンコーディング（BOM問題対応済み）
+        - JSON設定ファイル管理
+        
+        ###  使用方法
+        1. ZIPファイルをダウンロード展開
+        2. TaskCrony.exeを実行
+        3. タスク設定を入力して作成
+        4. Windows タスクスケジューラーで自動実行
+        
+        ビルド日時: $(Get-Date -Format "yyyy年MM月dd日 HH:mm") JST
+        "@
+        
+        $releaseNotes = $releaseNotes -replace "`r`n", "`n"
+        echo "RELEASE_NOTES<<EOF" >> $env:GITHUB_OUTPUT
+        echo $releaseNotes >> $env:GITHUB_OUTPUT
+        echo "EOF" >> $env:GITHUB_OUTPUT
+      shell: pwsh
+      
+    - name: Create Release
+      run: |
+        gh release create "v${{ steps.get_version.outputs.VERSION }}" `
+          --title "TaskCrony v${{ steps.get_version.outputs.VERSION }}" `
+          --notes '${{ steps.release_notes.outputs.RELEASE_NOTES }}' `
+          "./TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip#TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      shell: pwsh
