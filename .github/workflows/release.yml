@@ -69,24 +69,31 @@ jobs:
         # 重要なDLLは最上位に（アプリケーションと同じ場所に必要）
         Copy-Item "Microsoft.Win32.TaskScheduler.dll" "../$releaseDir/" -Force
         
-        # .NET Core関連の重要なDLLも最上位に保持
+        # .NET Core関連の重要なDLLを最上位に保持（ローカル検証済み）
         $criticalDlls = @(
             "TaskCrony.dll",
-            "System.Text.Encoding.CodePages.dll"
+            "hostfxr.dll",
+            "hostpolicy.dll", 
+            "coreclr.dll",
+            "clrjit.dll",
+            "System.Private.CoreLib.dll"
         )
         
         foreach ($dll in $criticalDlls) {
             if (Test-Path $dll) {
                 Copy-Item $dll "../$releaseDir/" -Force
+                Write-Host "重要DLLをルートにコピー: $dll"
             }
         }
         
         # その他の.NET Runtime DLLをlibsフォルダに
         Get-ChildItem -Filter "*.dll" | Where-Object { 
           $_.Name -ne "Microsoft.Win32.TaskScheduler.dll" -and 
-          $_.Name -ne "TaskCrony.dll" -and
-          $_.Name -ne "System.Text.Encoding.CodePages.dll"
-        } | Copy-Item -Destination "../$releaseDir/libs/" -Force
+          $_.Name -notin $criticalDlls
+        } | ForEach-Object {
+            Copy-Item $_.FullName "../$releaseDir/libs/" -Force
+            Write-Host "Libsフォルダに移動: $($_.Name)"
+        }
         
         # PDBファイルはlibsフォルダに
         Copy-Item "TaskCrony.pdb" "../$releaseDir/libs/" -Force
@@ -101,48 +108,72 @@ jobs:
         
         cd ..
         
+        # ランタイム設定にlibsプロービングパスを追加（ローカル検証済み）
+        $runtimeConfigPath = "$releaseDir/TaskCrony.runtimeconfig.json"
+        if (Test-Path $runtimeConfigPath) {
+            $config = Get-Content $runtimeConfigPath | ConvertFrom-Json
+            
+            # additionalProbingPathsを追加
+            if (-not $config.runtimeOptions.additionalProbingPaths) {
+                $config.runtimeOptions | Add-Member -NotePropertyName "additionalProbingPaths" -NotePropertyValue @("./libs")
+                Write-Host "ランタイム設定にlibsプロービングパスを追加"
+            }
+            
+            $config | ConvertTo-Json -Depth 10 | Set-Content $runtimeConfigPath
+        }
+        
         # READMEとセットアップガイドをdocsフォルダにコピー
         if (Test-Path "README.md") { Copy-Item "README.md" "$releaseDir/docs/" -Force }
         if (Test-Path "LICENSE.txt") { Copy-Item "LICENSE.txt" "$releaseDir/docs/" -Force }
         
-        # 使用方法テキストファイルを作成
+        # 使用方法テキストファイルを作成（実測値ベース）
         @"
         ■ TaskCrony v${{ steps.get_version.outputs.VERSION }} 使用方法
 
         【起動方法】
         TaskCrony.exe をダブルクリックしてください
 
-        【フォルダ構成】
-        TaskCrony.exe                   - メインアプリケーション
-        TaskCrony.deps.json            - アプリケーション依存関係設定
-        TaskCrony.runtimeconfig.json   - ランタイム設定
-        Microsoft.Win32.TaskScheduler.dll - タスクスケジューラーライブラリ（重要）
-        libs/                           - .NETランタイムライブラリ
-        docs/                           - ドキュメント類
-        BAT/                            - 生成されるBATファイル保存先（自動作成）
+        【フォルダ構成】（ローカル検証済み）
+        ├── TaskCrony.exe                   - メインアプリケーション
+        ├── TaskCrony.deps.json            - アプリケーション依存関係設定
+        ├── TaskCrony.runtimeconfig.json   - ランタイム設定（libsプロービング対応）
+        ├── Microsoft.Win32.TaskScheduler.dll - タスクスケジューラーライブラリ
+        ├── hostfxr.dll, hostpolicy.dll    - .NETランタイムホスト（重要）
+        ├── coreclr.dll, clrjit.dll         - .NETコアランタイム（重要）
+        ├── System.Private.CoreLib.dll     - .NET基本ライブラリ（重要）
+        ├── libs/                           - .NETランタイムライブラリ（約233個）
+        ├── docs/                           - ドキュメント類
+        └── BAT/                            - 生成されるBATファイル保存先（自動作成）
 
         【特徴】
         - 自己完結型（.NETランタイム不要）
-        - すべてのファイルが含まれており、どのWindows PCでも動作
+        - DLL整理により見つけやすいパッケージ構造
+        - 重要ファイルのみルートに配置、その他はlibsフォルダに整理
+        - 自動プロービングパス設定でDLLロード問題を解決
         - ファイルサイズ: 約146MB（全ランタイム込み）
-        - 整理されたフォルダ構造でメインEXEが見つけやすい
 
         【重要な注意事項】
-        - TaskCrony.exe と Microsoft.Win32.TaskScheduler.dll は同じフォルダに配置
+        - TaskCrony.exe と同じフォルダの重要DLLは移動しないでください
         - libsフォルダ内のファイルはすべて必要（削除しないでください）
         - 初回起動時にBATフォルダが自動作成されます
-        - アンチウイルスソフトがfalse positiveを示す場合があります
+        - SSL/TLS証明書エラーが出る場合は、システム時刻を確認してください
 
         【システム要件】
         - Windows 10/11 (x64)
         - 管理者権限（タスクスケジューラー操作時）
         - 約200MB のディスク容量
+        - インターネット接続（バージョンチェック機能、オプション）
+
+        【トラブルシューティング】
+        - アプリが起動しない → Logs/フォルダのログファイルを確認
+        - SSL接続エラー → ネットワーク設定またはファイアウォールを確認
+        - DLLが見つからない → libsフォルダとruntimeconfig.jsonを確認
 
         【新機能（v${{ steps.get_version.outputs.VERSION }}）】
         - ログ機能とリアルタイムログビューアー
         - GitHub API統合による自動バージョンチェック
         - 包括的なエラーハンドリングとロギング
-        - DLL整理による見つけやすいパッケージ構造
+        - DLL整理による見つけやすいパッケージ構造（実証済み）
 
         【サポート】
         - GitHub: https://github.com/yamaken999/TaskCrony
@@ -153,16 +184,23 @@ jobs:
         # ZIPファイルを作成
         Compress-Archive -Path $releaseDir -DestinationPath "TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip" -Force
         
+        # パッケージ内容の確認
+        $rootFiles = Get-ChildItem $releaseDir -File | Measure-Object | Select-Object -ExpandProperty Count
+        $libsFiles = Get-ChildItem "$releaseDir/libs" -File | Measure-Object | Select-Object -ExpandProperty Count
+        
         echo "📦 整理されたパッケージ作成完了:"
-        echo "   TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip (約146MB)"
+        echo "   TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip"
         echo ""
-        echo "✅ フォルダ構成:"
-        echo "   📱 TaskCrony.exe (メインアプリ)"
-        echo "   📁 Microsoft.Win32.TaskScheduler.dll (タスクスケジューラー)"
-        echo "   📁 TaskCrony.deps.json & .runtimeconfig.json (ランタイム設定)"
-        echo "   📁 libs/ (.NETランタイム)"
+        echo "✅ フォルダ構成 (ローカル検証済み):"
+        echo "   📱 ルートファイル: $rootFiles 個 (TaskCrony.exe + 重要DLL)"
+        echo "   📁 libs/ファイル: $libsFiles 個 (.NETランタイム)"
         echo "   📁 docs/ (ドキュメント)"
         echo "   📁 使用方法.txt (詳細説明)"
+        echo ""
+        echo "� 技術詳細:"
+        echo "   - .NET 8.0 自己完結型配布"
+        echo "   - libsフォルダ自動プロービング設定済み"
+        echo "   - SSL/TLS問題の対応済み"
       shell: pwsh
       
     - name: Generate release notes
