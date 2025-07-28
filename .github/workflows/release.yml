@@ -26,13 +26,13 @@ jobs:
         dotnet-version: '8.0.x'
         
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore TaskCrony.csproj
       
     - name: Build
-      run: dotnet build --configuration Release --no-restore --verbosity minimal
+      run: dotnet build TaskCrony.csproj --configuration Release --no-restore --verbosity minimal
       
     - name: Publish
-      run: dotnet publish --configuration Release --output ./publish --self-contained true --runtime win-x64 --verbosity minimal
+      run: dotnet publish TaskCrony.csproj --configuration Release --output ./publish --self-contained true --runtime win-x64 --verbosity minimal
       
     - name: Get version from csproj
       id: get_version
