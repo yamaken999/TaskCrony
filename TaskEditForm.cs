@@ -37,6 +37,9 @@ public partial class TaskEditForm : Form
         
         InitializeComponent();
         
+        // フォームタイトルを動的に設定
+        this.Text = $"タスク編集 - TaskCrony v{VersionChecker.GetCurrentVersion()}";
+        
         // モダンテーマを適用
         ModernTheme.ApplyToForm(this);
         
