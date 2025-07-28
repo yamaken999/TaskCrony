@@ -58,6 +58,15 @@ GitHub Actionsを使用してmasterブランチへのプッシュ時に自動的
 2. 依存関係が正しくインストールされているか確認
 3. .NET 8.0の互換性を確認
 
+### MSB1011エラー（複数プロジェクトファイル）
+- **症状**: "Specify which project or solution file to use"エラー
+- **原因**: フォルダ内に複数の.csprojまたは.slnファイルが存在
+- **解決**: ワークフローでプロジェクトファイルを明示的に指定
+  ```yaml
+  run: dotnet restore TaskCrony.csproj
+  run: dotnet build TaskCrony.csproj --configuration Release
+  ```
+
 ## セキュリティ注意事項
 - `GITHUB_TOKEN`は自動的に提供されるため、手動設定不要
 - リリースアセットは公開されるため、機密情報を含めないよう注意
