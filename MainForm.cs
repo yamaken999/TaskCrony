@@ -27,7 +27,7 @@ public partial class MainForm : Form
         InitializeComponent();
         
         // ログ初期化とアプリケーション開始ログ
-        Logger.Info("TaskCrony v1.2.0 アプリケーション開始");
+        Logger.Info($"TaskCrony v{VersionChecker.GetCurrentVersion()} アプリケーション開始");
         Logger.CleanupOldLogs();
         
         // BATフォルダのパスを設定（実行ファイルと同じディレクトリにBATフォルダを作成）
@@ -59,6 +59,9 @@ public partial class MainForm : Form
     /// </summary>
     private void InitializeControls()
     {
+        // フォームタイトルを動的に設定
+        this.Text = $"TaskCrony v{VersionChecker.GetCurrentVersion()} - Windows Task Scheduler Automation Tool";
+        
         // デフォルト値の設定
         comboBoxScheduleType.SelectedIndex = 0;
         dateTimePickerStart.Value = DateTime.Now.AddMinutes(5);
