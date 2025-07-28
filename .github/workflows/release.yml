@@ -8,6 +8,7 @@ on:
       - '**.csproj'
       - 'README.md'
       - 'LICENSE.txt'
+      - '.github/workflows/**'
 
 permissions:
   contents: write

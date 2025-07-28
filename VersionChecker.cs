@@ -4,8 +4,8 @@ using System.Text.Json;
 namespace TaskCrony;
 
 /// <summary>
-/// TaskCrony バージョンチェッククラス v1.3.0
-/// GitHub Actions ビルドテスト用コメント追加
+/// TaskCrony バージョンチェッククラス v1.3.1
+/// GitHub Actions ビルドテスト用コメント更新 - 2025/07/28
 /// </summary>
 public static class VersionChecker
 {
