@@ -35,6 +35,58 @@ jobs:
     - name: Publish
       run: dotnet publish TaskCrony.csproj --configuration Release --output ./publish --self-contained true --runtime win-x64 --verbosity minimal
       
+    - name: Create and sign with self-signed certificate
+      run: |
+        # 自己署名証明書を作成
+        $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=TaskCrony Publisher" -KeyAlgorithm RSA -KeyLength 2048 -Provider "Microsoft Enhanced RSA and AES Cryptographic Provider" -KeyExportPolicy Exportable -KeyUsage DigitalSignature -FriendlyName "TaskCrony Code Signing Certificate" -CertStoreLocation "Cert:\CurrentUser\My" -NotAfter (Get-Date).AddYears(1)
+        
+        # 証明書のサムプリントを取得
+        $thumbprint = $cert.Thumbprint
+        echo "証明書作成完了: $thumbprint"
+        
+        # 証明書をルート証明書ストアにコピー（信頼性向上のため）
+        $store = New-Object System.Security.Cryptography.X509Certificates.X509Store([System.Security.Cryptography.X509Certificates.StoreName]::Root, [System.Security.Cryptography.X509Certificates.StoreLocation]::CurrentUser)
+        $store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
+        $store.Add($cert)
+        $store.Close()
+        echo "証明書をルートストアに追加しました"
+        
+        # EXEファイルに署名
+        $exePath = "./publish/TaskCrony.exe"
+        if (Test-Path $exePath) {
+          Set-AuthenticodeSignature -FilePath $exePath -Certificate $cert -TimestampServer "http://timestamp.digicert.com"
+          echo "EXEファイルへの署名完了: $exePath"
+          
+          # 署名の確認
+          $signature = Get-AuthenticodeSignature -FilePath $exePath
+          echo "署名ステータス: $($signature.Status)"
+          echo "署名者: $($signature.SignerCertificate.Subject)"
+        } else {
+          echo "エラー: EXEファイルが見つかりません: $exePath"
+          exit 1
+        }
+      shell: pwsh
+      
+    - name: Verify signature
+      run: |
+        $exePath = "./publish/TaskCrony.exe"
+        $signature = Get-AuthenticodeSignature -FilePath $exePath
+        
+        echo "=== 署名検証結果 ==="
+        echo "ファイル: $exePath"
+        echo "署名ステータス: $($signature.Status)"
+        echo "署名者: $($signature.SignerCertificate.Subject)"
+        echo "証明書拇印: $($signature.SignerCertificate.Thumbprint)"
+        echo "タイムスタンプ: $($signature.TimeStamperCertificate.Subject)"
+        echo "有効期限: $($signature.SignerCertificate.NotAfter)"
+        
+        if ($signature.Status -eq "Valid") {
+          echo "✅ 署名は有効です"
+        } else {
+          echo "⚠️ 署名ステータス: $($signature.Status)"
+        }
+      shell: pwsh
+      
     - name: Get version from csproj
       id: get_version
       run: |
@@ -44,7 +96,7 @@ jobs:
           $version = ($csproj | Select-String -Pattern '<AssemblyVersion>(.*)</AssemblyVersion>').Matches[0].Groups[1].Value
         }
         if ([string]::IsNullOrEmpty($version)) {
-          $version = "1.3.1"
+          $version = "1.3.2"
         }
         echo "VERSION=$version" >> $env:GITHUB_OUTPUT
         echo "検出されたバージョン: $version"
@@ -64,6 +116,11 @@ jobs:
         $releaseNotes = @"
         ## TaskCrony v${{ steps.get_version.outputs.VERSION }}
         
+        ### 🔐 セキュリティ強化
+        - **コード署名対応**: 自己署名証明書によるEXEファイル署名を実装
+        - Windows Defender SmartScreen警告の軽減
+        - 実行ファイルの信頼性向上
+        
         ###  新機能改善
         - ログ機能とバージョンチェック機能追加  
         - 包括的なログ記録システム（7日間保持）
@@ -75,20 +132,27 @@ jobs:
         - 複数ファイル対応とリアルタイムプレビュー
         
         ###  配布ファイル
-        - **TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip**: 自己完結型実行可能ファイル (約146MB)
+        - **TaskCrony_v${{ steps.get_version.outputs.VERSION }}_Release.zip**: 署名済み自己完結型実行可能ファイル (約146MB)
         - 全ファイルをルートに配置で確実起動
+        - デジタル署名により安全性を向上
         
         ###  技術仕様
         - 対象: Windows 10/11 (.NET 8.0)
         - PowerShell連携による日付計算
         - UTF-8エンコーディング（BOM問題対応済み）
         - JSON設定ファイル管理
+        - 自己署名証明書によるコード署名
         
         ###  使用方法
         1. ZIPファイルをダウンロード展開
-        2. TaskCrony.exeを実行
+        2. TaskCrony.exeを実行（署名済みでより安全）
         3. タスク設定を入力して作成
         4. Windows タスクスケジューラーで自動実行
+        
+        ### 📋 署名情報
+        - 署名者: TaskCrony Publisher
+        - 証明書タイプ: 自己署名証明書
+        - タイムスタンプ: DigiCert
         
         ビルド日時: $(Get-Date -Format "yyyy年MM月dd日 HH:mm") JST
         "@

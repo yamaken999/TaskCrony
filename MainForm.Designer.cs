@@ -21,7 +21,7 @@ namespace TaskCrony
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new Size(1200, 850);
-            this.Text = "TaskCrony v1.0.0 - Windows Task Scheduler Automation Tool";
+            this.Text = "TaskCrony v1.3.2 - Windows Task Scheduler Automation Tool";
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
