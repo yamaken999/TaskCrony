@@ -35,6 +35,7 @@ bld/
 # TaskCrony specific - Publish and test directories
 publish/
 publish-*/
+publish_singlefile/
 organize-files.ps1
 
 # Visual Studio 2015/2017 cache/options directory
