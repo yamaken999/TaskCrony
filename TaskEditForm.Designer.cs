@@ -21,7 +21,7 @@ namespace TaskCrony
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new Size(1200, 850);
-            this.Text = "タスク編集 - TaskCrony v1.3.1";
+            this.Text = "タスク編集 - TaskCrony v1.3.2";
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
