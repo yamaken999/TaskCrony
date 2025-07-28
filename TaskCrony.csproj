@@ -4,6 +4,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>false</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <StartupObject>TaskCrony.Program</StartupObject>
@@ -12,12 +13,40 @@
     <FileVersion>0.13.0.0</FileVersion>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    
+    <!-- DLL最適化設定 -->
+    <PublishTrimmed>false</PublishTrimmed>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <DebuggerSupport>false</DebuggerSupport>
+    <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
+    <EventSourceSupport>false</EventSourceSupport>
+    <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+    <MetricsSupport>false</MetricsSupport>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <SuppressIldasmAttribute>true</SuppressIldasmAttribute>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="TaskScheduler" Version="2.11.0" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+
+  <!-- 不要なアセンブリの明示的除外 -->
+  <ItemGroup Condition="'$(Configuration)' == 'Release'">
+    <!-- 不要なフレームワーク参照を除外 -->
+    <FrameworkReference Remove="Microsoft.WindowsDesktop.App" />
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App">
+      <PrivateAssets>all</PrivateAssets>
+    </FrameworkReference>
+  </ItemGroup>
+
+  <!-- 特定のDLLを明示的に除外 -->
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="System.Globalization.Invariant" Value="true" />
+    <RuntimeHostConfigurationOption Include="System.Drawing.EnableUnixSupport" Value="false" />
   </ItemGroup>
 
 </Project>
