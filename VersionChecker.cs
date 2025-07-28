@@ -10,7 +10,7 @@ namespace TaskCrony;
 public static class VersionChecker
 {
     private const string GITHUB_API_URL = "https://api.github.com/repos/yamaken999/TaskCrony/releases/latest";
-    private const string CURRENT_VERSION = "1.3.0";
+    private const string CURRENT_VERSION = "1.3.1";
     
     /// <summary>
     /// バージョン情報
