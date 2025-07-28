@@ -99,7 +99,32 @@ jobs:
         echo "EOF" >> $env:GITHUB_OUTPUT
       shell: pwsh
       
+    - name: Check existing release
+      id: check_release
+      run: |
+        $version = "${{ steps.get_version.outputs.VERSION }}"
+        $tagExists = git tag --list "v$version"
+        if ($tagExists) {
+          echo "既存のタグ v$version が見つかりました"
+          # 既存のリリースを削除
+          try {
+            gh release delete "v$version" --yes
+            echo "既存のリリースを削除しました"
+          } catch {
+            echo "リリース削除をスキップ（存在しない可能性）"
+          }
+          # 既存のタグを削除
+          git tag -d "v$version"
+          git push origin ":refs/tags/v$version"
+          echo "既存のタグを削除しました"
+        }
+        echo "CREATE_RELEASE=true" >> $env:GITHUB_OUTPUT
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      shell: pwsh
+
     - name: Create Release
+      if: steps.check_release.outputs.CREATE_RELEASE == 'true'
       run: |
         gh release create "v${{ steps.get_version.outputs.VERSION }}" `
           --title "TaskCrony v${{ steps.get_version.outputs.VERSION }}" `
