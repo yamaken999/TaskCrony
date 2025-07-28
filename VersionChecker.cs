@@ -4,13 +4,13 @@ using System.Text.Json;
 namespace TaskCrony;
 
 /// <summary>
-/// TaskCrony バージョンチェッククラス v1.3.2
+/// TaskCrony バージョンチェッククラス v0.13.0
 /// GitHub Actions ビルドテスト用コメント更新 - 2025/07/28
 /// </summary>
 public static class VersionChecker
 {
     private const string GITHUB_API_URL = "https://api.github.com/repos/yamaken999/TaskCrony/releases/latest";
-    private const string CURRENT_VERSION = "1.3.2";
+    private const string CURRENT_VERSION = "0.13.0";
     
     /// <summary>
     /// バージョン情報
