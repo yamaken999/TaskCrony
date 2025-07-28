@@ -103,22 +103,36 @@ jobs:
       id: check_release
       run: |
         $version = "${{ steps.get_version.outputs.VERSION }}"
-        $tagExists = git tag --list "v$version"
-        if ($tagExists) {
-          echo "既存のタグ v$version が見つかりました"
-          # 既存のリリースを削除
-          try {
-            gh release delete "v$version" --yes
-            echo "既存のリリースを削除しました"
-          } catch {
-            echo "リリース削除をスキップ（存在しない可能性）"
-          }
-          # 既存のタグを削除
-          git tag -d "v$version"
-          git push origin ":refs/tags/v$version"
-          echo "既存のタグを削除しました"
+        echo "バージョン v$version の既存リリースをチェック中..."
+        
+        # 既存のリリースを削除
+        $releaseExists = gh release view "v$version" 2>$null
+        if ($LASTEXITCODE -eq 0) {
+          echo "既存のリリース v$version を削除中..."
+          gh release delete "v$version" --yes --cleanup-tag
+          echo "既存のリリースを削除しました"
+        } else {
+          echo "既存のリリースは見つかりませんでした"
         }
+        
+        # 既存のタグを削除（ローカル）
+        $tagExists = git tag -l "v$version"
+        if ($tagExists) {
+          echo "既存のローカルタグ v$version を削除中..."
+          git tag -d "v$version"
+          echo "ローカルタグを削除しました"
+        }
+        
+        # 既存のタグを削除（リモート）
+        git ls-remote --tags origin | Select-String "v$version"
+        if ($LASTEXITCODE -eq 0) {
+          echo "既存のリモートタグ v$version を削除中..."
+          git push origin ":refs/tags/v$version"
+          echo "リモートタグを削除しました"
+        }
+        
         echo "CREATE_RELEASE=true" >> $env:GITHUB_OUTPUT
+        echo "リリース作成準備完了"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       shell: pwsh
