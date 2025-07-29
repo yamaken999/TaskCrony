@@ -1,0 +1,28 @@
+{
+  "runtimeOptions": {
+    "tfm": "net8.0",
+    "includedFrameworks": [
+      {
+        "name": "Microsoft.NETCore.App",
+        "version": "8.0.17"
+      },
+      {
+        "name": "Microsoft.WindowsDesktop.App",
+        "version": "8.0.17"
+      }
+    ],
+    "configProperties": {
+      "System.Globalization.Invariant": true,
+      "System.Drawing.EnableUnixSupport": false,
+      "System.Diagnostics.Debugger.IsSupported": false,
+      "System.Diagnostics.Metrics.Meter.IsSupported": false,
+      "System.Diagnostics.Tracing.EventSource.IsSupported": false,
+      "System.Globalization.PredefinedCulturesOnly": true,
+      "System.Net.Http.EnableActivityPropagation": false,
+      "System.Reflection.Metadata.MetadataUpdater.IsSupported": false,
+      "System.Resources.UseSystemResourceKeys": true,
+      "System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization": false,
+      "CSWINRT_USE_WINDOWS_UI_XAML_PROJECTIONS": false
+    }
+  }
+}
