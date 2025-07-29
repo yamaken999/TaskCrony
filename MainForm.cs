@@ -1043,29 +1043,60 @@ public partial class MainForm : Form
     /// </summary>
     private void CreateScheduledTask(string taskName, string batFilePath)
     {
-        using var taskService = new TaskService();
-
-        // 既存のタスクがある場合は削除
-        var existingTask = taskService.GetTask(taskName);
-        if (existingTask != null)
+        try
         {
-            taskService.RootFolder.DeleteTask(taskName);
+            // TaskService初期化を慎重に行う
+            using var taskService = new TaskService();
+            
+            // サービス接続確認
+            if (!taskService.Connected)
+            {
+                throw new InvalidOperationException("TaskServiceに接続できませんでした");
+            }
+
+            // 既存のタスクがある場合は削除
+            var existingTask = taskService.GetTask(taskName);
+            if (existingTask != null)
+            {
+                taskService.RootFolder.DeleteTask(taskName);
+            }
+
+            // 新しいタスクを作成
+            var taskDefinition = taskService.NewTask();
+            taskDefinition.RegistrationInfo.Description = $"TaskCrony v{Application.ProductVersion} で作成されたタスク: {taskName}";
+            taskDefinition.Principal.LogonType = TaskLogonType.InteractiveToken;
+            taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
+
+            // トリガーの設定
+            CreateTaskTrigger(taskDefinition);
+
+            // アクションの設定
+            var execAction = new ExecAction("cmd.exe", $"/c \"{batFilePath}\"", null);
+            taskDefinition.Actions.Add(execAction);
+
+            // 設定の最適化
+            taskDefinition.Settings.Enabled = true;
+            taskDefinition.Settings.AllowDemandStart = true;
+            taskDefinition.Settings.StartWhenAvailable = true;
+            taskDefinition.Settings.DisallowStartIfOnBatteries = false;
+            taskDefinition.Settings.StopIfGoingOnBatteries = false;
+
+            // タスクを登録
+            taskService.RootFolder.RegisterTaskDefinition(taskName, taskDefinition);
         }
-
-        // 新しいタスクを作成
-        var taskDefinition = taskService.NewTask();
-        taskDefinition.RegistrationInfo.Description = $"TaskCrony v1.2.0 で作成されたタスク: {taskName}";
-        taskDefinition.Principal.LogonType = TaskLogonType.InteractiveToken;
-
-        // トリガーの設定
-        CreateTaskTrigger(taskDefinition);
-
-        // アクションの設定
-        var execAction = new ExecAction("cmd.exe", $"/c \"{batFilePath}\"", null);
-        taskDefinition.Actions.Add(execAction);
-
-        // タスクを登録
-        taskService.RootFolder.RegisterTaskDefinition(taskName, taskDefinition);
+        catch (System.TypeInitializationException ex)
+        {
+            var details = $"TaskScheduler初期化エラー: {ex.Message}";
+            if (ex.InnerException != null)
+            {
+                details += $" 内部例外: {ex.InnerException.Message}";
+            }
+            throw new InvalidOperationException(details, ex);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"タスク作成エラー: {ex.Message}", ex);
+        }
     }
 
     /// <summary>
