@@ -1065,7 +1065,7 @@ public partial class MainForm : Form
             var taskDefinition = taskService.NewTask();
             taskDefinition.RegistrationInfo.Description = $"TaskCrony v{Application.ProductVersion} で作成されたタスク: {taskName}";
             taskDefinition.Principal.LogonType = TaskLogonType.InteractiveToken;
-            taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
+            taskDefinition.Principal.RunLevel = TaskRunLevel.LUA; // Limited User Account - 通常ユーザーレベル
 
             // トリガーの設定
             CreateTaskTrigger(taskDefinition);
